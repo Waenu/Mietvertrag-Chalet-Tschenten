@@ -75,6 +75,7 @@
       <div class="calc"><label>Anzahl Übernachtungen (automatisch)</label><b id="naechte">–</b></div>
       <div class="calc"><label>Zahlbar bis (kommt ins PDF)</label><b id="zahlbar">–</b></div>
     </div>
+    <div id="datumMsg"></div>
   </section>
 
   <section>
@@ -295,6 +296,8 @@ function mieterAlterFehler(){
 /* ---------- Anzeige / Prüfung ---------- */
 function aktualisieren(){
   belegungBegrenzen();
+  // Check-out: frühestens der Tag nach dem Check-in wählbar (Kalender springt auf diesen Monat)
+  $("cout").min = $("cin").value ? addTage($("cin").value,1) : "";
   const n=naechte($("cin").value,$("cout").value);
   $("naechte").textContent = Number.isNaN(n) ? "–" : (n>0? n : "Check-out liegt nicht nach Check-in");
   const zb=zahlbarBis($("cin").value);
@@ -603,6 +606,12 @@ async function start(){
   const h=heute(); $("visDatum").value=`${pad(h.d)}.${pad(h.m)}.${h.y}`; $("visOrt").value=CFG.vorgaben.ort;
   $("rabatt").value=CFG.vorgaben.rabattProzent; $("reinigung").value=fmtRp(CFG.vorgaben.reinigungChf*100);
   document.querySelectorAll("main input,main select").forEach(el=>el.addEventListener("input",aktualisieren));
+  $("cin").addEventListener("input",()=>{
+    const c=$("cin").value, o=$("cout").value;
+    if(c && o && o<=c){ $("cout").value=""; meldung("datumMsg","Check-out lag nicht nach dem neuen Check-in und wurde geleert. Bitte neu wählen.","warn"); }
+    else meldung("datumMsg","");
+    aktualisieren();
+  });
   $("addGast").onclick=()=>gastZeile();
   $("btnPdf").onclick=pdfErstellen;
   $("btnLeer").onclick=()=>{ if(confirm("Alle Eingaben der Maske löschen? (Einstellungen bleiben erhalten)")) leeren(); };
