@@ -103,10 +103,9 @@
   <section>
     <h2>Gäste</h2>
     <div class="grid">
-      <div><label for="nErw">Anzahl Erwachsene (ab 18 Jahren)</label><select id="nErw"></select></div>
-      <div><label for="nJug">Anzahl Kinder und Jugendliche von 6 bis 17 Jahren</label><select id="nJug"></select></div>
-      <div><label for="nKind">Anzahl Kinder von 4 bis 5 Jahren</label><select id="nKind"></select></div>
-      <div><label for="nKlein">Anzahl Kleinkinder bis 3 Jahre</label><select id="nKlein"></select></div>
+      <div><label for="nErw">Anzahl Gäste ab 6 Jahren</label><select id="nErw"></select></div>
+      <div><label for="nKind">Anzahl Kinder von 2½ bis 5 Jahren</label><select id="nKind"></select></div>
+      <div><label for="nKlein">Anzahl Kleinkinder bis 2½ Jahre</label><select id="nKlein"></select></div>
     </div>
     <div id="platz" class="msg ok" style="margin-top:10px"></div>
     <p style="margin:12px 0 4px;font-size:13px;color:var(--mut)">Weitere Gäste: Vorname Nachname, Geburtsdatum (der Mieter steht im Vertrag automatisch an erster Stelle)</p>
@@ -341,8 +340,8 @@ function renderKalender(){
 function kalenderMonat(delta){ calM+=delta; if(calM<0){calM=11;calY--;} if(calM>11){calM=0;calY++;} renderKalender(); }
 
 /* ---------- Belegung: Auswahllisten werden begrenzt ----------
-   Betten: Gäste ab 6 Jahren und Kinder von 4 bis 5 Jahren brauchen je ein normales Bett (zusammen höchstens maxPersonen).
-   Kleinkinder bis 3 Jahre: höchstens maxKleinkinder. */
+   Betten: Gäste ab 6 Jahren und Kinder von 2½ bis 5 Jahren brauchen je ein normales Bett (zusammen höchstens maxPersonen).
+   Kleinkinder bis 2½ Jahre (Kinderbettchen): höchstens maxKleinkinder. */
 let kuerzHinweis="";
 function fuelleListe(id,von,bis,wert){
   const el=$(id);
@@ -355,18 +354,31 @@ function fuelleListe(id,von,bis,wert){
 function belegungBegrenzen(){
   if(!CFG) return;
   const P=CFG.vorgaben, M=P.maxPersonen, num=id=>parseInt($(id).value,10)||0;
-  const eAlt=num("nErw"), jAlt=num("nJug"), kAlt=num("nKind");
+  const eAlt=num("nErw"), kAlt=num("nKind");
   fuelleListe("nErw",1,M,Math.max(eAlt,1)); const e=+$("nErw").value;
-  fuelleListe("nJug",0,M-e,jAlt);           const j=+$("nJug").value;
-  fuelleListe("nKind",0,M-e-j,kAlt);        const k=+$("nKind").value;
+  fuelleListe("nKind",0,M-e,kAlt);          const k=+$("nKind").value;
   fuelleListe("nKlein",0,P.maxKleinkinder,num("nKlein"));
-  const h=[];
-  if(jAlt>M-e) h.push(`Kinder und Jugendliche von 6 bis 17 Jahren auf ${j} gekürzt`);
-  if(kAlt>M-e-j) h.push(`Kinder von 4 bis 5 Jahren auf ${k} gekürzt`);
-  kuerzHinweis = h.length ? h.join("; ")+`: Erwachsene, Jugendliche und Kinder ab 4 Jahren brauchen zusammen höchstens ${M} Betten.` : "";
-  const frei=M-e-j-k;
+  kuerzHinweis = kAlt>M-e ? `Kinder von 2½ bis 5 Jahren auf ${k} gekürzt: Gäste ab 6 Jahren und Kinder von 2½ bis 5 Jahren brauchen zusammen höchstens ${M} Betten.` : "";
+  const frei=M-e-k;
   $("platz").className="msg "+(frei===0?"warn":"ok");
-  $("platz").textContent=(frei===0?"Alle "+M+" Betten belegt.":"Noch "+frei+" von "+M+" Betten frei.")+" Kinder ab 4 Jahren brauchen ein Erwachsenenbett. Kleinkinder bis 3 Jahre: höchstens "+P.maxKleinkinder+" (kein Bett nötig).";
+  $("platz").textContent=(frei===0?"Alle "+M+" Betten belegt.":"Noch "+frei+" von "+M+" Betten frei.")+" Kinder von 2½ bis 5 Jahren brauchen ein Erwachsenenbett. Kleinkinder bis 2½ Jahre: höchstens "+P.maxKleinkinder+" (Kinderbettchen, kein Bett nötig).";
+}
+
+/* Kontrolle der Altersgruppen anhand der Geburtsdaten am Check-in (Gästekarte, Kurtaxe, Bettchen) */
+function monateAm(geb,st){
+  const [gy,gm,gd]=geb.split("-").map(Number), [sy,sm,sd]=st.split("-").map(Number);
+  return (sy-gy)*12+(sm-gm)-(sd<gd?1:0);
+}
+function altersKontrolle(){
+  const cin=$("cin").value; if(!cin||!CFG) return "";
+  const P=CFG.vorgaben, gastM=P.grenzeGastJahre*12, kleinM=P.grenzeKleinkindMonate;
+  const liste=gaesteListe(), personen=[$("gebMieter").value,...liste.map(x=>x.g)];
+  const c={gast:0,kind:0,klein:0}; let ohneGeb=0;
+  personen.forEach(g=>{ if(!g){ohneGeb++;return;} const m=monateAm(g,cin); if(m<0) return; if(m>=gastM) c.gast++; else if(m>=kleinM) c.kind++; else c.klein++; });
+  const sel={gast:+$("nErw").value||0,kind:+$("nKind").value||0,klein:+$("nKlein").value||0};
+  const alle = (1+liste.length)===(sel.gast+sel.kind+sel.klein) && ohneGeb===0;
+  const abw=["gast","kind","klein"].some(k=> alle ? c[k]!==sel[k] : c[k]>sel[k]);
+  return abw ? `Nach den Geburtsdaten am Check-in sind es ${c.gast} ab 6 Jahren, ${c.kind} von 2½ bis 5 Jahren und ${c.klein} bis 2½ Jahre. Gewählt sind ${sel.gast}, ${sel.kind} und ${sel.klein}. Bitte prüfen (Gästekarte, Kurtaxe, Bettchen).` : "";
 }
 
 function alterAm(geb,stichtag){
@@ -400,9 +412,10 @@ function aktualisieren(){
   $("chemCodeBox").hidden = $("chem").value!=="ja";
 
   const w=[]; const g=gaesteListe();
-  const total=(+$("nErw").value||0)+(+$("nJug").value||0)+(+$("nKind").value||0)+(+$("nKlein").value||0), genannt=1+g.length;
+  const total=(+$("nErw").value||0)+(+$("nKind").value||0)+(+$("nKlein").value||0), genannt=1+g.length;
   if(genannt!==total) w.push(`Namentlich aufgeführt: ${genannt} von ${total} Personen (Mieter plus weitere Gäste).`);
   if(kuerzHinweis) w.push(kuerzHinweis);
+  { const ak=altersKontrolle(); if(ak) w.push(ak); }
   { const m=mieterAlterFehler(); $("mieterMsg").innerHTML = m?`<div class="msg err">${m}</div>`:""; }
   $("gaesteMsg").innerHTML = w.map(t=>`<div class="msg warn">${t}</div>`).join("");
 
@@ -535,8 +548,8 @@ function erstellePdf(daten){
   const gl=daten.gaeste;
   ensure(30+gl.length*4.6);
   bar([{t:"Gäste: Anzahl, Namen und Geburtsdaten"}]);
-  [["Anzahl Erwachsene (ab 18 Jahren)",daten.nErw],["Anzahl Kinder und Jugendliche von 6 bis 17 Jahren",daten.nJug],["Anzahl Kinder von 4 bis 5 Jahren",daten.nKind],["Anzahl Kleinkinder bis 3 Jahre",daten.nKlein]]
-    .forEach(([l,v])=>{ setF(false,9); doc.text(l,cx,y+lh9*0.74); doc.text(String(v),cx+85,y+lh9*0.74); y+=lh9; });
+  [["Anzahl Gäste ab 6 Jahren",daten.nErw],["Anzahl Kinder von 2½ bis 5 Jahren",daten.nKind],["Anzahl Kleinkinder bis 2½ Jahre",daten.nKlein]]
+    .forEach(([l,v])=>{ setF(false,9); doc.text(l,cx,y+lh9*0.74); doc.text(String(v),cx+60,y+lh9*0.74); y+=lh9; });
   y+=1.5;
   gl.forEach(g=>{ ensure(lh9); setF(false,9); doc.text(`${g.n}${g.g?", "+fmtDatumIso(g.g):""}${g.m?" (Mieter)":""}`,cx,y+lh9*0.74); y+=lh9; });
   y+=1.5;
@@ -644,9 +657,9 @@ async function pdfErstellen(){
   const cin=$("cin").value, cout=$("cout").value, n=naechte(cin,cout);
   if(!$("vorname").value.trim()&&!$("nachname").value.trim()) fehler.push("Name des Mieters fehlt.");
   if(!cin||!cout) fehler.push("Check-in und Check-out fehlen."); else if(!(n>0)) fehler.push("Check-out muss nach dem Check-in liegen."); else if(n<minNaechte()) fehler.push("Mindestaufenthalt: "+minNaechte()+" Nächte.");
-  if(CFG){ const e=+$("nErw").value,j=+$("nJug").value,k=+$("nKind").value,kl=+$("nKlein").value;
-    if(e<1) fehler.push("Mindestens 1 Erwachsener (ab 18 Jahren) ist nötig.");
-    if(e+j+k>CFG.vorgaben.maxPersonen) fehler.push("Höchstens "+CFG.vorgaben.maxPersonen+" Personen mit Bett (Erwachsene, Jugendliche und Kinder ab 4 Jahren).");
+  if(CFG){ const e=+$("nErw").value,k=+$("nKind").value,kl=+$("nKlein").value;
+    if(e<1) fehler.push("Mindestens 1 Gast ab 6 Jahren ist nötig.");
+    if(e+k>CFG.vorgaben.maxPersonen) fehler.push("Höchstens "+CFG.vorgaben.maxPersonen+" Personen mit Bett (Gäste ab 6 Jahren plus Kinder von 2½ bis 5 Jahren).");
     if(kl>CFG.vorgaben.maxKleinkinder) fehler.push("Höchstens "+CFG.vorgaben.maxKleinkinder+" Kleinkinder.");
     if(!$("gebMieter").value) fehler.push("Geburtsdatum des Mieters fehlt.");
     const ma=mieterAlterFehler(); if(ma) fehler.push(ma); }
@@ -658,7 +671,7 @@ async function pdfErstellen(){
   const daten={
     vorname:$("vorname").value.trim(),nachname:$("nachname").value.trim(),strasse:$("strasse").value.trim(),
     plz:$("plz").value.trim(),ort:$("ort").value.trim(),mail:$("mail").value.trim(),mobile:$("mobile").value.trim(),
-    cin,cout,naechte:n,zahlbar:zahlbarBis(cin),nErw:+$("nErw").value||0,nJug:+$("nJug").value||0,nKind:+$("nKind").value||0,nKlein:+$("nKlein").value||0,
+    cin,cout,naechte:n,zahlbar:zahlbarBis(cin),nErw:+$("nErw").value||0,nKind:+$("nKind").value||0,nKlein:+$("nKlein").value||0,
     gaeste:[{n:($("vorname").value.trim()+" "+$("nachname").value.trim()).trim(),g:$("gebMieter").value,m:true},...gaesteListe()],r,rabTxt:String(parseZahl($("rabatt").value)).replace(".",","),
     codeWohnung:$("codeWohnung").value.trim(),chem:$("chem").value,codeChem:$("codeChem").value.trim(),
     visOrt:CFG.vorgaben.ort,visDatum:$("visDatum").value,dateiname:dateiname()
@@ -673,7 +686,7 @@ async function pdfErstellen(){
 /* ---------- Start ---------- */
 function leeren(){
   ["vorname","nachname","strasse","plz","ort","mail","mobile","gebMieter","cin","cout","codeWohnung","codeChem"].forEach(i=>$(i).value="");
-  $("nErw").value="1"; $("nJug").value="0"; $("nKind").value="0"; $("nKlein").value="0"; $("gebMieter").value=""; $("preis").value="0.00";
+  $("nErw").value="1"; $("nKind").value="0"; $("nKlein").value="0"; $("gebMieter").value=""; $("preis").value="0.00";
   $("rabatt").value=CFG.vorgaben.rabattProzent; $("reinigung").value=fmtRp(CFG.vorgaben.reinigungChf*100);
   $("chem").value="nein"; $("gaeste").innerHTML=""; meldung("pdfMsg",""); kalenderStartMonat(); aktualisieren();
 }
