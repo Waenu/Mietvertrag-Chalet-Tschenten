@@ -411,11 +411,13 @@ function erstellePdf(daten){
 
   /* --- Titel --- */
   setF(true,15); doc.setTextColor(...ORANGE);
-  const tl=doc.splitTextToSize(T.titel,CW); tl.forEach(l=>{doc.text(l,ML,y+5);y+=6.6;});
+  // Titel in einer Zeile: Schriftgrösse so wählen, dass der Text genau die Textbreite füllt
+  setF(true,10); const tw10=doc.getTextWidth(T.titel); const ts=Math.min(18,10*CW/tw10*0.99);
+  doc.setFontSize(ts); doc.text(T.titel,ML,y+ts*PT*0.85); y+=ts*PT*1.25;
   doc.setTextColor(0,0,0); y+=0.5;
   setF(true,8.5); doc.setTextColor(...GRAU); doc.splitTextToSize(T.adresse,CW).forEach(l=>{doc.text(l,ML,y+3.2);y+=3.9;});
   doc.setTextColor(0,0,0); y+=1.5;
-  para([{t:T.beschreibung}],{size:9,after:3});
+  para([{t:T.beschreibung}],{size:9,after:3,justify:true});
 
   /* --- Vermieter / Mieter --- */
   const colB=CW/2;
