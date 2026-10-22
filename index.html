@@ -1,0 +1,573 @@
+<!doctype html>
+<html lang="de-CH">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mietvertrag Chalet Tschenten</title>
+<style>
+  :root{
+    --bg:#f4f1ec; --card:#fff; --ink:#222; --mut:#6b6b6b; --acc:#e97132; --acc-d:#c85a1f;
+    --line:#d9d4cc; --ok:#2f7d32; --warn:#b26a00; --err:#b3261e;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 "Bahnschrift","Segoe UI",system-ui,sans-serif}
+  header{background:var(--acc);color:#fff;padding:14px 20px}
+  header h1{margin:0;font-size:20px;letter-spacing:.3px}
+  header small{opacity:.9}
+  main{max-width:980px;margin:0 auto;padding:16px;display:grid;gap:14px}
+  section{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:14px 16px}
+  section h2{margin:0 0 10px;font-size:15px;text-transform:uppercase;letter-spacing:.6px;color:var(--acc-d)}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px 14px}
+  label{display:block;font-size:12px;color:var(--mut);margin-bottom:2px}
+  input,select,textarea{width:100%;padding:7px 9px;border:1px solid #bdb7ad;border-radius:5px;font:inherit;background:#fff}
+  input:focus,select:focus,textarea:focus{outline:2px solid var(--acc);outline-offset:0;border-color:var(--acc)}
+  input[readonly]{background:#f0ede8;color:#444}
+  .calc{background:#faf6f1;border:1px dashed #d8c7b4;border-radius:6px;padding:8px 10px}
+  .calc b{font-size:17px}
+  .row{display:flex;gap:10px;align-items:end;flex-wrap:wrap}
+  .guest{display:grid;grid-template-columns:1fr 170px 34px;gap:8px;margin-bottom:6px}
+  button{font:inherit;border:0;border-radius:6px;padding:9px 16px;cursor:pointer;background:var(--acc);color:#fff}
+  button:hover{background:var(--acc-d)}
+  button.sec{background:#e9e4dc;color:#222}
+  button.sec:hover{background:#ddd6cb}
+  button.x{padding:6px 0;background:#e9e4dc;color:#222}
+  .msg{padding:8px 10px;border-radius:6px;margin-top:6px;font-size:13px}
+  .msg.warn{background:#fff4de;color:var(--warn)}
+  .msg.err{background:#fde8e6;color:var(--err)}
+  .msg.ok{background:#e6f4e7;color:var(--ok)}
+  .fname{font-family:Consolas,monospace;font-size:13px;word-break:break-all}
+  details>summary{cursor:pointer;font-weight:600;color:var(--acc-d)}
+  .sig{max-height:70px;border:1px solid var(--line);background:#fff;margin-top:6px;display:block}
+  .tot{display:flex;justify-content:space-between;gap:12px;padding:3px 0}
+  .tot.big{border-top:1px solid #999;margin-top:4px;padding-top:6px;font-weight:700}
+  @media (max-width:560px){.guest{grid-template-columns:1fr 34px}.guest input[type=date]{grid-column:1}}
+</style>
+</head>
+<body>
+<header>
+  <h1>Mietvertrag Chalet Tschenten</h1>
+  <small id="vers">lädt …</small>
+</header>
+
+<main>
+  <div id="ladefehler" class="msg err" hidden></div>
+
+  <section>
+    <h2>Mieter</h2>
+    <div class="grid">
+      <div><label for="vorname">Vorname</label><input id="vorname" autocomplete="off"></div>
+      <div><label for="nachname">Nachname</label><input id="nachname" autocomplete="off"></div>
+      <div><label for="strasse">Strasse Nr</label><input id="strasse" autocomplete="off"></div>
+      <div><label for="plz">PLZ</label><input id="plz" autocomplete="off" inputmode="numeric"></div>
+      <div><label for="ort">Ort</label><input id="ort" autocomplete="off"></div>
+      <div><label for="mail">Mail</label><input id="mail" type="email" autocomplete="off"></div>
+      <div><label for="mobile">Mobile</label><input id="mobile" autocomplete="off" inputmode="tel"></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Check-in, Check-out und Nächte</h2>
+    <div class="grid">
+      <div><label for="cin">Check-in am</label><input id="cin" type="date"></div>
+      <div><label for="cout">Check-out am</label><input id="cout" type="date"></div>
+      <div class="calc"><label>Anzahl Übernachtungen (automatisch)</label><b id="naechte">–</b></div>
+      <div class="calc"><label>Zahlbar bis (kommt ins PDF)</label><b id="zahlbar">–</b></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Gäste</h2>
+    <div class="grid">
+      <div><label for="nErw">Anzahl Gäste ab 6 Jahren</label><input id="nErw" type="number" min="0" step="1" value="0"></div>
+      <div><label for="nKind">Anzahl Kinder von 4 bis 5 Jahren</label><input id="nKind" type="number" min="0" step="1" value="0"></div>
+      <div><label for="nKlein">Anzahl Kleinkinder bis 3 Jahre</label><input id="nKlein" type="number" min="0" step="1" value="0"></div>
+    </div>
+    <p style="margin:12px 0 4px;font-size:13px;color:var(--mut)">Vorname Nachname, Geburtsdatum</p>
+    <div id="gaeste"></div>
+    <button class="sec" type="button" id="addGast">+ Gast</button>
+    <div id="gaesteMsg"></div>
+  </section>
+
+  <section>
+    <h2>Mietkosten</h2>
+    <div class="grid">
+      <div><label for="preis">Preis für die gebuchten Nächte (CHF)</label><input id="preis" inputmode="decimal" value="0.00"></div>
+      <div><label for="rabatt">Rabatt in Prozent</label><input id="rabatt" inputmode="decimal"></div>
+      <div><label for="reinigung">Reinigungsgebühr pauschal (CHF)</label><input id="reinigung" inputmode="decimal"></div>
+    </div>
+    <div class="calc" style="margin-top:10px;max-width:460px">
+      <div class="tot"><span>Preis für die gebuchten Nächte</span><span id="kPreis">0.00</span></div>
+      <div class="tot"><span id="kRabattTxt">Preis nach Rabatt</span><span id="kNach">0.00</span></div>
+      <div class="tot"><span>Reinigungsgebühr pauschal</span><span id="kRein">0.00</span></div>
+      <div class="tot big"><span>Total (CHF)</span><span id="kTotal">0.00</span></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Zutrittscodes</h2>
+    <div class="grid">
+      <div><label for="codeWohnung">Wohnung: Code</label><input id="codeWohnung" autocomplete="off" placeholder="Code"></div>
+      <div><label for="chem">Cheminée</label>
+        <select id="chem"><option value="nein">Keine Nutzung vereinbart</option><option value="ja">Nutzung freigegeben (Code eintragen)</option></select></div>
+      <div id="chemCodeBox" hidden><label for="codeChem">Cheminée: Code</label><input id="codeChem" autocomplete="off"></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Visum Vermieter</h2>
+    <div class="grid">
+      <div><label>Ort</label><input id="visOrt" readonly></div>
+      <div><label>Datum (heute, nicht änderbar)</label><input id="visDatum" readonly></div>
+    </div>
+    <div id="sigStatus" style="margin-top:8px;font-size:13px"></div>
+  </section>
+
+  <section>
+    <h2>Vertrag erstellen</h2>
+    <p style="margin:0 0 6px;font-size:13px;color:var(--mut)">Dateiname:</p>
+    <div class="fname" id="fname">–</div>
+    <div class="row" style="margin-top:12px">
+      <button id="btnPdf" type="button">PDF erstellen</button>
+      <button id="btnLeer" type="button" class="sec">Maske leeren</button>
+    </div>
+    <div id="pdfMsg"></div>
+  </section>
+
+  <section>
+    <details id="einst">
+      <summary>Einstellungen (einmalig, bleiben nur auf diesem Rechner)</summary>
+      <p style="font-size:13px;color:var(--mut)">Diese Angaben werden nicht auf GitHub gespeichert, sondern nur im Browser dieses Rechners. Mit «Einstellungen sichern» legst du eine Kopie als Datei auf deinem PC ab, falls die Browserdaten einmal gelöscht werden.</p>
+      <div class="grid">
+        <div><label for="sName">Vermieter Name</label><input id="sName"></div>
+        <div><label for="sStrasse">Vermieter Strasse Nr</label><input id="sStrasse"></div>
+        <div><label for="sPlzOrt">Vermieter PLZ Ort</label><input id="sPlzOrt"></div>
+        <div><label for="sMail">Vermieter Mail</label><input id="sMail"></div>
+        <div><label for="sMobile">Vermieter Mobile</label><input id="sMobile"></div>
+        <div><label for="sIban">IBAN</label><input id="sIban"></div>
+        <div><label for="sBic">BIC/Swift Code</label><input id="sBic"></div>
+        <div><label for="sBank">Bank</label><input id="sBank"></div>
+      </div>
+      <div style="margin-top:10px"><label for="sKontakt">Kontaktzeile (Telefonnummern im Aufenthalt)</label>
+        <input id="sKontakt" placeholder="Silvan: +41 … / Marianne: +41 … / Jerome (Stellvertretung): +41 …"></div>
+      <div class="grid" style="margin-top:10px">
+        <div><label for="sSig">Unterschrift (JPEG oder PNG)</label><input id="sSig" type="file" accept="image/png,image/jpeg"><img id="sigPrev" class="sig" alt="" hidden></div>
+        <div><label for="sQr">QR-Rechnung-Bild (optional, PNG/JPEG)</label><input id="sQr" type="file" accept="image/png,image/jpeg"><img id="qrPrev" class="sig" alt="" hidden></div>
+      </div>
+      <div class="row" style="margin-top:12px">
+        <button type="button" id="sSave">Einstellungen speichern</button>
+        <button type="button" class="sec" id="sExport">Einstellungen sichern (Datei)</button>
+        <label class="sec" style="display:inline-block;background:#e9e4dc;color:#222;border-radius:6px;padding:9px 16px;cursor:pointer;margin:0;font-size:15px">Einstellungen laden (Datei)
+          <input id="sImport" type="file" accept="application/json,.json" hidden></label>
+      </div>
+      <div id="sMsg"></div>
+    </details>
+  </section>
+</main>
+
+<script src="lib/jspdf.umd.min.js"></script>
+<script>
+"use strict";
+/* ---------- Hilfen ---------- */
+const $ = id => document.getElementById(id);
+let CFG = null;           // einstellungen.json
+let PRIV = {};            // lokale Einstellungen
+const LS_KEY = "mietvertragChaletTschenten.privat";
+
+const pad = n => String(n).padStart(2,"0");
+const heute = () => { const d=new Date(); return {y:d.getFullYear(),m:d.getMonth()+1,d:d.getDate()}; };
+const fmtDatumIso = iso => { if(!iso) return ""; const [y,m,d]=iso.split("-"); return `${d}.${m}.${y}`; };
+
+/* Beträge werden in Rappen (ganze Zahlen) gerechnet, damit keine Rundungsfehler entstehen */
+function parseChf(s){
+  if(s==null) return NaN;
+  s=String(s).trim().replace(/[’'\s]/g,"").replace(",",".");
+  if(s==="") return 0;
+  if(!/^-?\d+(\.\d+)?$/.test(s)) return NaN;
+  return Math.round(parseFloat(s)*100);
+}
+function fmtRp(rp){
+  const neg=rp<0; rp=Math.abs(rp);
+  const fr=Math.floor(rp/100), r=rp%100;
+  const s=String(fr).replace(/\B(?=(\d{3})+(?!\d))/g,"’");
+  return (neg?"-":"")+s+"."+pad(r);
+}
+function parseZahl(s){ s=String(s).trim().replace(",","."); if(s==="") return 0; return /^\d+(\.\d+)?$/.test(s)?parseFloat(s):NaN; }
+
+function naechte(cin,cout){
+  if(!cin||!cout) return NaN;
+  const a=Date.UTC(...cin.split("-").map((v,i)=>i===1?+v-1:+v));
+  const b=Date.UTC(...cout.split("-").map((v,i)=>i===1?+v-1:+v));
+  return Math.round((b-a)/86400000);
+}
+function addTage(iso,t){
+  const [y,m,d]=iso.split("-").map(Number);
+  const dt=new Date(Date.UTC(y,m-1,d+t));
+  return `${dt.getUTCFullYear()}-${pad(dt.getUTCMonth()+1)}-${pad(dt.getUTCDate())}`;
+}
+
+/* Zahlbar bis: 30 Tage vor Check-in. Liegt dieses Datum vor heute (kurzfristige Buchung), gilt der Vertragssatz
+   «3 Tage nach Vertragsabschluss»; der Abschlusstag ist der Maske nicht bekannt, daher dann kein Datum. */
+function zahlbarBis(cin){
+  if(!cin) return "";
+  const h=heute(), heuteIso=`${h.y}-${pad(h.m)}-${pad(h.d)}`;
+  const z=addTage(cin,-30);
+  return z>=heuteIso ? z : "";
+}
+
+/* Berechnung wie im Word-Formular: Nach Rabatt = Preis x (1 - Rabatt/100); Total = Nach Rabatt + Reinigung */
+function rechne(){
+  const preis=parseChf($("preis").value);
+  const rab=parseZahl($("rabatt").value);
+  const rein=parseChf($("reinigung").value);
+  if([preis,rab,rein].some(Number.isNaN)||rab>100) return null;
+  const bp=Math.round(rab*100);                       // Rabatt in Hundertstel-Prozent (ganze Zahl)
+  const nach=Math.round(preis*(10000-bp)/10000);      // kaufmännisch auf den Rappen gerundet
+  return {preis,rab,rein,nach,total:nach+rein};
+}
+
+/* Dateiname: 2027_02_18-02_25 Mietvertrag Vorname Nachname.pdf (über den Jahreswechsel mit Jahr beim Austritt) */
+function dateiname(){
+  const cin=$("cin").value, cout=$("cout").value;
+  const vn=$("vorname").value.trim(), nn=$("nachname").value.trim();
+  if(!cin||!cout||!(vn||nn)) return "";
+  const [y1,m1,d1]=cin.split("-"), [y2,m2,d2]=cout.split("-");
+  const bis = y1===y2 ? `${m2}_${d2}` : `${y2}_${m2}_${d2}`;
+  const name=(vn+" "+nn).trim().replace(/[\\/:*?"<>|]/g,"").replace(/\s+/g," ");
+  return `${y1}_${m1}_${d1}-${bis} Mietvertrag ${name}.pdf`;
+}
+
+/* ---------- Gäste ---------- */
+function gastZeile(name="",geb=""){
+  const div=document.createElement("div"); div.className="guest";
+  div.innerHTML=`<input class="gName" placeholder="Vorname Nachname"><input class="gGeb" type="date" title="Geburtsdatum"><button type="button" class="x" title="Entfernen">×</button>`;
+  div.querySelector(".gName").value=name; div.querySelector(".gGeb").value=geb;
+  div.querySelector("button").onclick=()=>{div.remove();aktualisieren();};
+  div.querySelectorAll("input").forEach(i=>i.addEventListener("input",aktualisieren));
+  $("gaeste").appendChild(div);
+}
+function gaesteListe(){
+  return [...document.querySelectorAll("#gaeste .guest")].map(r=>({n:r.querySelector(".gName").value.trim(),g:r.querySelector(".gGeb").value}))
+    .filter(x=>x.n||x.g);
+}
+
+/* ---------- Anzeige / Prüfung ---------- */
+function aktualisieren(){
+  const n=naechte($("cin").value,$("cout").value);
+  $("naechte").textContent = Number.isNaN(n) ? "–" : (n>0? n : "Check-out liegt nicht nach Check-in");
+  const zb=zahlbarBis($("cin").value);
+  $("zahlbar").textContent = !$("cin").value ? "–" : (zb ? fmtDatumIso(zb) : "kurzfristig: 3 Tage nach Vertragsabschluss (kein Datum im PDF)");
+  const r=rechne();
+  if(r){
+    $("kPreis").textContent=fmtRp(r.preis);
+    $("kRabattTxt").textContent=`Preis nach Rabatt von ${String($("rabatt").value).trim().replace(",",".")||0} % auf die gebuchten Nächte`;
+    $("kNach").textContent=fmtRp(r.nach); $("kRein").textContent=fmtRp(r.rein); $("kTotal").textContent=fmtRp(r.total);
+  } else {
+    ["kPreis","kNach","kRein","kTotal"].forEach(i=>$(i).textContent="–");
+  }
+  $("fname").textContent = dateiname() || "– (erscheint, sobald Name und beide Daten ausgefüllt sind)";
+  $("chemCodeBox").hidden = $("chem").value!=="ja";
+
+  const w=[]; const g=gaesteListe();
+  const nE=+$("nErw").value||0,nK=+$("nKind").value||0,nKl=+$("nKlein").value||0;
+  if(g.length && g.length!==nE+nK+nKl) w.push(`Es sind ${g.length} Gäste namentlich aufgeführt, die Anzahlen oben ergeben ${nE+nK+nKl}.`);
+  if(CFG){
+    if(nKl>CFG.vorgaben.maxKleinkinder) w.push(`Mehr als ${CFG.vorgaben.maxKleinkinder} Kleinkinder (Auslegung der Wohnung laut Vertrag: ${CFG.vorgaben.maxKleinkinder}).`);
+    if(nE+nK>CFG.vorgaben.maxPersonen) w.push(`Mehr als ${CFG.vorgaben.maxPersonen} Personen ab 4 Jahren (Auslegung der Wohnung laut Vertrag: ${CFG.vorgaben.maxPersonen}).`);
+  }
+  $("gaesteMsg").innerHTML = w.map(t=>`<div class="msg warn">${t}</div>`).join("");
+
+  const s=PRIV.sigData ? "Unterschrift: geladen." : "Unterschrift: noch nicht geladen (Einstellungen).";
+  $("sigStatus").textContent=s;
+}
+
+/* ---------- lokale Einstellungen ---------- */
+function privLaden(){
+  try{ PRIV=JSON.parse(localStorage.getItem(LS_KEY)||"{}")||{}; }catch(e){ PRIV={}; }
+  privInFelder();
+}
+function privInFelder(){
+  $("sName").value=PRIV.name||""; $("sStrasse").value=PRIV.strasse||""; $("sPlzOrt").value=PRIV.plzOrt||"";
+  $("sMail").value=PRIV.mail||""; $("sMobile").value=PRIV.mobile||""; $("sIban").value=PRIV.iban||"";
+  $("sBic").value=PRIV.bic||""; $("sBank").value=PRIV.bank||""; $("sKontakt").value=PRIV.kontakt||"";
+  for(const [k,img] of [["sigData","sigPrev"],["qrData","qrPrev"]]){
+    if(PRIV[k]){ $(img).src=PRIV[k]; $(img).hidden=false; } else { $(img).hidden=true; }
+  }
+}
+function privAusFeldern(){
+  PRIV.name=$("sName").value.trim(); PRIV.strasse=$("sStrasse").value.trim(); PRIV.plzOrt=$("sPlzOrt").value.trim();
+  PRIV.mail=$("sMail").value.trim(); PRIV.mobile=$("sMobile").value.trim(); PRIV.iban=$("sIban").value.trim();
+  PRIV.bic=$("sBic").value.trim(); PRIV.bank=$("sBank").value.trim(); PRIV.kontakt=$("sKontakt").value.trim();
+}
+function privSpeichern(){
+  privAusFeldern();
+  try{ localStorage.setItem(LS_KEY,JSON.stringify(PRIV)); return true; }catch(e){ return false; }
+}
+function bildLaden(file){
+  return new Promise((res,rej)=>{
+    const fr=new FileReader();
+    fr.onload=()=>{ const im=new Image(); im.onload=()=>res({data:fr.result,w:im.naturalWidth,h:im.naturalHeight}); im.onerror=rej; im.src=fr.result; };
+    fr.onerror=rej; fr.readAsDataURL(file);
+  });
+}
+function meldung(id,txt,typ){ $(id).innerHTML = txt?`<div class="msg ${typ}">${txt}</div>`:""; }
+
+/* ---------- PDF ---------- */
+const ORANGE=[233,113,50], GRAU=[110,110,110], LINIE=[170,170,170];
+
+function erstellePdf(daten){
+  const {jsPDF}=window.jspdf;
+  const doc=new jsPDF({unit:"mm",format:"a4",compress:true});
+  const PW=210, ML=25.4, MR=22.7, CW=PW-ML-MR, TOP=11, BOT=284;
+  const PT=0.3528; // mm je pt
+  let y=TOP;
+  const T=CFG.texte;
+
+  const setF=(b,size)=>{doc.setFont("helvetica",b?"bold":"normal"); if(size) doc.setFontSize(size);};
+  const ensure=h=>{ if(y+h>BOT){ doc.addPage(); y=TOP; } };
+
+  function bar(texte,h=5.6){ // orange Balken; texte: [{t,x}]
+    doc.setFillColor(...ORANGE); doc.rect(ML,y,CW,h,"F");
+    doc.setTextColor(255,255,255); setF(true,9.5);
+    texte.forEach(o=>doc.text(o.t,o.x??ML+1.6,y+h*0.72,{align:o.align||"left"}));
+    doc.setTextColor(0,0,0); y+=h+1.8;
+  }
+  function layout(runs,maxW,size){
+    setF(false,size); const sp=doc.getTextWidth(" ");
+    const words=[]; runs.forEach(r=>r.t.split(/\s+/).filter(Boolean).forEach(w=>{setF(r.b,size); words.push({w,b:!!r.b,wd:doc.getTextWidth(w)});}));
+    const lines=[]; let cur=[],cw=0;
+    words.forEach(wo=>{ const need=cur.length?cw+sp+wo.wd:wo.wd; if(need>maxW&&cur.length){lines.push(cur);cur=[wo];cw=wo.wd;}else{cur.push(wo);cw=need;} });
+    if(cur.length) lines.push(cur);
+    return {lines,sp};
+  }
+  function para(runs,o={}){
+    const size=o.size||9, x0=o.x??ML, w=o.w??CW, lh=size*PT*1.30;
+    const {lines,sp}=layout(runs,w,size);
+    lines.forEach((ln,i)=>{
+      ensure(lh);
+      const sum=ln.reduce((a,b)=>a+b.wd,0);
+      let gap=sp; if(o.justify&&i<lines.length-1&&ln.length>1) gap=(w-sum)/(ln.length-1);
+      let x=x0; const by=y+lh*0.74;
+      if(o.justify&&i<lines.length-1&&ln.length>1){
+        ln.forEach(wo=>{ setF(wo.b,size); doc.text(wo.w,x,by); x+=wo.wd+gap; });
+      } else { // Zeile segmentweise (gleicher Stil) ausgeben, damit der PDF-Betrachter die Wortabstände selbst setzt
+        let k=0;
+        while(k<ln.length){
+          let j=k, txt=ln[k].w; while(j+1<ln.length&&ln[j+1].b===ln[k].b){ j++; txt+=" "+ln[j].w; }
+          setF(ln[k].b,size); doc.text(txt,x,by); x+=doc.getTextWidth(txt)+sp; k=j+1;
+        }
+      }
+      y+=lh;
+    });
+    y+=o.after??2;
+  }
+  function zeile(label,wert,o={}){ // zweispaltige Zeile
+    const size=o.size||9, lh=size*PT*1.5;
+    ensure(lh); setF(false,size); doc.text(label,ML,y+lh*0.74);
+    setF(!!o.bold,size); doc.text(wert,o.x??ML+62,y+lh*0.74); y+=lh;
+  }
+
+  /* --- Titel --- */
+  setF(true,15); doc.setTextColor(...ORANGE);
+  const tl=doc.splitTextToSize(T.titel,CW); tl.forEach(l=>{doc.text(l,ML,y+5);y+=6.6;});
+  doc.setTextColor(0,0,0); y+=0.5;
+  setF(true,8.5); doc.setTextColor(...GRAU); doc.splitTextToSize(T.adresse,CW).forEach(l=>{doc.text(l,ML,y+3.2);y+=3.9;});
+  doc.setTextColor(0,0,0); y+=1.5;
+  para([{t:T.beschreibung}],{size:9,after:3});
+
+  /* --- Vermieter / Mieter --- */
+  const colB=CW/2;
+  ensure(40);
+  bar([{t:"Vermieter"},{t:"Mieter",x:ML+colB+1.6}]);
+  const vm=[ [PRIV.name,`${daten.vorname} ${daten.nachname}`.trim()],
+             [PRIV.strasse,daten.strasse],
+             [PRIV.plzOrt,`${daten.plz} ${daten.ort}`.trim()],
+             [`Mail: ${PRIV.mail||""}`,`Mail: ${daten.mail}`],
+             [`Mobile: ${PRIV.mobile||""}`,`Mobile: ${daten.mobile}`] ];
+  vm.forEach(([a,b])=>{ const lh=9*PT*1.5; ensure(lh); setF(false,9); doc.text(a||"",ML+1.6,y+lh*0.74); doc.text(b||"",ML+colB+1.6,y+lh*0.74); y+=lh; });
+  y+=3;
+
+  /* --- Check-in / Check-out --- */
+  ensure(30);
+  bar([{t:"Check-in, Check-out und Nächte"}]);
+  const cx=ML+1.6;
+  const lh9=9*PT*1.5;
+  setF(false,9);
+  doc.text("Check-in am",cx,y+lh9*0.74); doc.text(fmtDatumIso(daten.cin),cx+40,y+lh9*0.74);
+  doc.text(`ab ${CFG.vorgaben.checkinZeit} Uhr (andere Zeiten nach Absprache)`,cx+70,y+lh9*0.74); y+=lh9;
+  doc.text("Check-out am",cx,y+lh9*0.74); doc.text(fmtDatumIso(daten.cout),cx+40,y+lh9*0.74);
+  doc.text(`bis ${CFG.vorgaben.checkoutZeit} Uhr (andere Zeiten nach Absprache)`,cx+70,y+lh9*0.74); y+=lh9;
+  doc.text("Anzahl Übernachtungen",cx,y+lh9*0.74); doc.text(String(daten.naechte),cx+40,y+lh9*0.74); y+=lh9+2.5;
+  para([{t:T.checkoutHinweis.replace("{checkout}",CFG.vorgaben.checkoutZeit).replace("{checkin}",CFG.vorgaben.checkinZeit)}],{after:3});
+
+  /* --- Gäste --- */
+  const gl=daten.gaeste;
+  ensure(30+gl.length*4.6);
+  bar([{t:"Gäste: Anzahl, Namen und Geburtsdaten"}]);
+  [["Anzahl Gäste ab 6 Jahren",daten.nErw],["Anzahl Kinder von 4 bis 5 Jahren",daten.nKind],["Anzahl Kleinkinder bis 3 Jahre",daten.nKlein]]
+    .forEach(([l,v])=>{ setF(false,9); doc.text(l,cx,y+lh9*0.74); doc.text(String(v),cx+60,y+lh9*0.74); y+=lh9; });
+  y+=1.5;
+  gl.forEach(g=>{ ensure(lh9); setF(false,9); doc.text(`${g.n}${g.g?", "+fmtDatumIso(g.g):""}`,cx,y+lh9*0.74); y+=lh9; });
+  y+=1.5;
+  para([{t:T.gaesteHinweis}],{after:3});
+
+  /* --- Mietkosten --- */
+  ensure(36);
+  bar([{t:"Mietkosten"}]);
+  const R=ML+CW-1.6;
+  const kost=[ ["Preis für die gebuchten Nächte",daten.r.preis,false],
+               [`Preis nach Rabatt von ${daten.rabTxt} % auf die gebuchten Nächte`,daten.r.nach,false],
+               ["Reinigungsgebühr pauschal",daten.r.rein,false] ];
+  kost.forEach(([l,v])=>{ setF(false,9); doc.text(l,cx,y+lh9*0.74); doc.text("CHF",R-26,y+lh9*0.74); doc.text(fmtRp(v),R,y+lh9*0.74,{align:"right"}); y+=lh9; });
+  y+=1.2; doc.setDrawColor(...LINIE); doc.setLineWidth(0.25); doc.line(ML,y,ML+CW,y); y+=0.6;
+  setF(true,9); doc.text("Total",cx,y+lh9*0.74); doc.text("CHF",R-26,y+lh9*0.74); doc.text(fmtRp(daten.r.total),R,y+lh9*0.74,{align:"right"}); y+=lh9+3;
+  para([{t:T.zahlungHinweis}],{after:daten.zahlbar?1:3});
+  if(daten.zahlbar){ ensure(lh9); setF(true,9); doc.text("Zahlbar bis: "+fmtDatumIso(daten.zahlbar),ML,y+lh9*0.74); y+=lh9+2.5; }
+
+  /* --- Inkludierte Leistungen --- */
+  ensure(24);
+  bar([{t:"Inkludierte Leistungen"}]);
+  para([{t:T.leistungen}],{after:1});
+  ensure(5); setF(false,9); doc.setTextColor(0,0,200); doc.textWithLink(T.leistungenLink,ML,y+3.4,{url:T.leistungenLink}); doc.setTextColor(0,0,0); y+=6;
+
+  /* --- Stornierung --- */
+  ensure(40);
+  bar([{t:"Stornierungsbedingungen"}]);
+  para([{t:T.storno}],{justify:true,after:3});
+
+  /* --- Zutrittscodes --- */
+  ensure(24);
+  bar([{t:"Zutrittscodes"}]);
+  setF(false,9); doc.text("Wohnung:",cx,y+lh9*0.74); setF(true,9); doc.text(daten.codeWohnung||"",cx+22,y+lh9*0.74); y+=lh9;
+  setF(false,9); doc.text("Cheminée:",cx,y+lh9*0.74); setF(true,9);
+  doc.text(daten.chem==="ja"?(daten.codeChem||""):"Keine Nutzung vereinbart",cx+22,y+lh9*0.74); y+=lh9+2.5;
+  ensure(17);
+  para([{t:T.kontaktHinweis}],{after:1.5});
+  if(PRIV.kontakt) para([{t:PRIV.kontakt}],{after:3});
+
+  /* --- Bankverbindung --- */
+  const qrH=PRIV.qrData? 22 : 0;
+  ensure(Math.max(22,qrH+8));
+  bar([{t:"Bankverbindung"}]);
+  const y0=y;
+  setF(false,9);
+  [`IBAN: ${PRIV.iban||""}`,`BIC/Swift Code: ${PRIV.bic||""}`,PRIV.bank||""].forEach(t=>{ doc.text(t,cx,y+lh9*0.74); y+=lh9; });
+  if(PRIV.qrData){
+    try{ doc.addImage(PRIV.qrData,PRIV.qrData.startsWith("data:image/png")?"PNG":"JPEG",ML+CW-qrH-1,y0,qrH,qrH); }catch(e){}
+    y=Math.max(y,y0+qrH);
+  }
+  y+=3;
+
+  /* --- Hausregeln --- */
+  ensure(30);
+  bar([{t:"Weitere Hinweise zur Nutzung und den Hausregeln"}]);
+  T.hausregeln.forEach(h=>para([{t:h.titel+":",b:true},{t:h.text}],{justify:true,after:2.2}));
+
+  /* --- Unterschriften --- */
+  const sigRowH=25, rowH=7.5, need=5.6+1.8+rowH+sigRowH+4;
+  ensure(need+6); y+=4;
+  const c0=ML, c1=ML+34, c2=ML+34+(CW-34)/2, c3=ML+CW;
+  doc.setFillColor(...ORANGE); doc.rect(ML,y,CW,5.6,"F");
+  doc.setTextColor(255,255,255); setF(true,9.5);
+  doc.text("Mieter",(c1+c2)/2,y+4,{align:"center"}); doc.text("Vermieter",(c2+c3)/2,y+4,{align:"center"});
+  doc.setTextColor(0,0,0); y+=5.6+1.8;
+  doc.setDrawColor(...LINIE); doc.setLineWidth(0.25);
+  const yA=y, yB=y+rowH, yC=yB+sigRowH;
+  [yA,yB,yC].forEach(yy=>doc.line(c0,yy,c3,yy));
+  [c0,c1,c2,c3].forEach(xx=>doc.line(xx,yA,xx,yC));
+  setF(true,9); doc.text("Ort, Datum",c0+1.6,yA+rowH*0.68); doc.text("Unterschrift",c0+1.6,yB+6);
+  setF(false,9); doc.text(`${daten.visOrt}, ${daten.visDatum}`,c2+2,yA+rowH*0.68);
+  if(PRIV.sigData&&PRIV.sigW&&PRIV.sigH){
+    const maxW=(c3-c2)-6, maxH=sigRowH-4; const sc=Math.min(maxW/PRIV.sigW,maxH/PRIV.sigH);
+    const iw=PRIV.sigW*sc, ih=PRIV.sigH*sc;
+    try{ doc.addImage(PRIV.sigData,PRIV.sigData.startsWith("data:image/png")?"PNG":"JPEG",c2+((c3-c2)-iw)/2,yB+(sigRowH-ih)/2,iw,ih); }catch(e){}
+  }
+  y=yC+2;
+
+  /* --- Fusszeile --- */
+  const n=doc.getNumberOfPages();
+  for(let p=1;p<=n;p++){
+    doc.setPage(p); setF(false,7.5); doc.setTextColor(...GRAU);
+    doc.text(`Version ${CFG.vorlage.version} / ${CFG.vorlage.datum}`,PW/2-20,291,{align:"center"});
+    doc.text(`Seite ${p} | ${n}`,PW/2+25,291,{align:"center"});
+  }
+  doc.setProperties({title:daten.dateiname.replace(/\.pdf$/,""),author:PRIV.name||"",subject:"Mietvertrag Chalet Tschenten"});
+  return doc;
+}
+
+async function speichern(blob,name){
+  if(window.showSaveFilePicker){
+    try{
+      const h=await window.showSaveFilePicker({suggestedName:name,types:[{description:"PDF",accept:{"application/pdf":[".pdf"]}}]});
+      const w=await h.createWritable(); await w.write(blob); await w.close(); return {ok:true,name:h.name,via:"Ordnerwahl"};
+    }catch(e){ if(e&&e.name==="AbortError") return {ok:false,abbruch:true}; }
+  }
+  const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=name; document.body.appendChild(a); a.click();
+  setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},2000);
+  return {ok:true,name,via:"Download"};
+}
+
+async function pdfErstellen(){
+  meldung("pdfMsg","");
+  const fehler=[];
+  const cin=$("cin").value, cout=$("cout").value, n=naechte(cin,cout);
+  if(!$("vorname").value.trim()&&!$("nachname").value.trim()) fehler.push("Name des Mieters fehlt.");
+  if(!cin||!cout) fehler.push("Check-in und Check-out fehlen."); else if(!(n>0)) fehler.push("Check-out muss nach dem Check-in liegen.");
+  const r=rechne(); if(!r) fehler.push("Preis, Rabatt (0 bis 100) oder Reinigung sind keine gültigen Zahlen.");
+  if(!PRIV.name||!PRIV.iban) fehler.push("Vermieter-Angaben und IBAN fehlen: bitte unter «Einstellungen» einmalig eintragen.");
+  if(!PRIV.sigData) fehler.push("Unterschrift fehlt: bitte unter «Einstellungen» laden.");
+  if(fehler.length){ meldung("pdfMsg",fehler.join("<br>"),"err"); if(!PRIV.name||!PRIV.iban||!PRIV.sigData) $("einst").open=true; return; }
+
+  const daten={
+    vorname:$("vorname").value.trim(),nachname:$("nachname").value.trim(),strasse:$("strasse").value.trim(),
+    plz:$("plz").value.trim(),ort:$("ort").value.trim(),mail:$("mail").value.trim(),mobile:$("mobile").value.trim(),
+    cin,cout,naechte:n,zahlbar:zahlbarBis(cin),nErw:+$("nErw").value||0,nKind:+$("nKind").value||0,nKlein:+$("nKlein").value||0,
+    gaeste:gaesteListe(),r,rabTxt:String(parseZahl($("rabatt").value)).replace(".",","),
+    codeWohnung:$("codeWohnung").value.trim(),chem:$("chem").value,codeChem:$("codeChem").value.trim(),
+    visOrt:CFG.vorgaben.ort,visDatum:$("visDatum").value,dateiname:dateiname()
+  };
+  let blob;
+  try{ blob=erstellePdf(daten).output("blob"); }catch(e){ meldung("pdfMsg","PDF konnte nicht erstellt werden: "+e.message,"err"); return; }
+  const res=await speichern(blob,daten.dateiname);
+  if(res.abbruch) meldung("pdfMsg","Speichern abgebrochen.","warn");
+  else meldung("pdfMsg",`PDF gespeichert: <b>${res.name}</b>${res.via==="Download"?" (im Download-Ordner)":""}`,"ok");
+}
+
+/* ---------- Start ---------- */
+function leeren(){
+  ["vorname","nachname","strasse","plz","ort","mail","mobile","cin","cout","codeWohnung","codeChem"].forEach(i=>$(i).value="");
+  $("nErw").value=$("nKind").value=$("nKlein").value=0; $("preis").value="0.00";
+  $("rabatt").value=CFG.vorgaben.rabattProzent; $("reinigung").value=fmtRp(CFG.vorgaben.reinigungChf*100);
+  $("chem").value="nein"; $("gaeste").innerHTML=""; gastZeile(); meldung("pdfMsg",""); aktualisieren();
+}
+
+async function start(){
+  privLaden();
+  try{
+    const r=await fetch("einstellungen.json",{cache:"no-store"}); if(!r.ok) throw new Error("HTTP "+r.status);
+    CFG=await r.json();
+  }catch(e){
+    $("ladefehler").hidden=false;
+    $("ladefehler").textContent="einstellungen.json konnte nicht geladen werden ("+e.message+"). Bei Öffnen per Doppelklick auf die Datei ist das nicht möglich; bitte die GitHub-Pages-Adresse verwenden.";
+    $("btnPdf").disabled=true; return;
+  }
+  $("vers").textContent=`Vorlage Version ${CFG.vorlage.version} / ${CFG.vorlage.datum}`;
+  const h=heute(); $("visDatum").value=`${pad(h.d)}.${pad(h.m)}.${h.y}`; $("visOrt").value=CFG.vorgaben.ort;
+  $("rabatt").value=CFG.vorgaben.rabattProzent; $("reinigung").value=fmtRp(CFG.vorgaben.reinigungChf*100);
+  gastZeile();
+  document.querySelectorAll("main input,main select").forEach(el=>el.addEventListener("input",aktualisieren));
+  $("addGast").onclick=()=>gastZeile();
+  $("btnPdf").onclick=pdfErstellen;
+  $("btnLeer").onclick=()=>{ if(confirm("Alle Eingaben der Maske löschen? (Einstellungen bleiben erhalten)")) leeren(); };
+  $("sSave").onclick=()=>{ meldung("sMsg",privSpeichern()?"Einstellungen gespeichert (nur auf diesem Rechner).":"Speichern im Browser nicht möglich (Browserdaten blockiert?). Bitte «Einstellungen sichern» verwenden.",privSpeichern()?"ok":"err"); aktualisieren(); };
+  $("sSig").onchange=async e=>{ const f=e.target.files[0]; if(!f) return; const b=await bildLaden(f); PRIV.sigData=b.data;PRIV.sigW=b.w;PRIV.sigH=b.h; privInFelder(); privSpeichern(); aktualisieren(); };
+  $("sQr").onchange=async e=>{ const f=e.target.files[0]; if(!f) return; const b=await bildLaden(f); PRIV.qrData=b.data; privInFelder(); privSpeichern(); };
+  $("sExport").onclick=()=>{ privAusFeldern(); const blob=new Blob([JSON.stringify(PRIV,null,1)],{type:"application/json"});
+    const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="Mietvertrag Einstellungen PRIVAT.json"; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),2000);
+    meldung("sMsg","Datei «Mietvertrag Einstellungen PRIVAT.json» erstellt. Enthält IBAN und Unterschrift: nicht ins Repo legen, nicht weitergeben.","warn"); };
+  $("sImport").onchange=async e=>{ const f=e.target.files[0]; if(!f) return; try{ PRIV=JSON.parse(await f.text()); privInFelder(); privSpeichern(); meldung("sMsg","Einstellungen geladen.","ok"); aktualisieren(); }catch(x){ meldung("sMsg","Datei konnte nicht gelesen werden.","err"); } };
+  aktualisieren();
+}
+start();
+</script>
+</body>
+</html>

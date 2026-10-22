@@ -1,0 +1,58 @@
+{
+  "_hinweis": "Hier stehen nur Vorgaben und Vertragstexte. Persönliche Daten (Adresse, IBAN, Telefonnummern, QR-Bild, Unterschrift) werden NICHT hier gespeichert, sondern in der App unter «Einstellungen» lokal im Browser.",
+  "vorlage": {
+    "version": "1.8",
+    "datum": "07.09.2026"
+  },
+  "vorgaben": {
+    "ort": "Densbüren",
+    "rabattProzent": 30,
+    "reinigungChf": 240,
+    "checkinZeit": "16:00",
+    "checkoutZeit": "10:00",
+    "maxKleinkinder": 2,
+    "maxPersonen": 6
+  },
+  "texte": {
+    "titel": "Mietvertrag für die Ferienwohnung im «Chalet Tschenten» Adelboden",
+    "adresse": "Chalet Tschenten, Mattenweg 2, 3715 Adelboden, Hauseingang im Erdgeschoss Familie Werder",
+    "beschreibung": "Vollständig ausgestattete 4,5 Zimmer-Parterrewohnung mit drei Schlafzimmern und zwei Badezimmern. Die Ferienwohnung ist für sechs erwachsene Personen und zwei Kleinkinder bis max. 3 Jahren ausgelegt.",
+    "checkoutHinweis": "Bitte halte beim Check-out unbedingt die {checkout} Uhr-Regel ein. Für die Reinigung benötigen wir die verbleibenden Stunden bis {checkin} Uhr, damit die Wohnung stets tadellos sauber übergeben werden kann.",
+    "gaesteHinweis": "Im Chalet dürfen nur die in der Buchung aufgeführten Personen übernachten.",
+    "zahlungHinweis": "Bitte überweise den Totalbetrag bis 30 Tage vor dem Check-in. Bei Buchungen, die weniger als 30 Tage vor dem Check-in erfolgen, ist der Totalbetrag innerhalb von 3 Tagen nach Vertragsabschluss fällig.",
+    "leistungen": "Bett-, Frottee- und Küchenwäsche, Strom, Heizung, Wasser, WLAN, Garage und Aussenparkplatz sowie Kurtaxen und Gästekarten.",
+    "leistungenLink": "https://adelboden-lenk-kandersteg.ch/buchen/angebote/gaestekarte",
+    "storno": "Stornierungen erfolgen per Mail oder WhatsApp. Bis 30 Tage vor Check-in ist die Stornierung kostenlos. Danach betragen die Stornierungskosten 30 % der gebuchten Nächte, bei weniger als 14 Tagen 50 % und bei weniger als 7 Tagen 80 %. Bei Nichtantritt oder vorzeitiger Abreise erfolgt keine Rückerstattung. Gelingt es uns, den Zeitraum anderweitig zu vermieten, reduzieren oder erlassen wir die Stornierungskosten entsprechend. Kann der Mieter wegen Strassensperrungen, Lawinengefahr, Krankheit oder anderer Gründe, die der Vermieter nicht zu vertreten hat, nicht anreisen, gelten die Stornierungsbedingungen.",
+    "kontaktHinweis": "Während deines Aufenthalts kommunizieren wir gerne schriftlich via WhatsApp oder Mail. Telefonanrufe bitte nur im Notfall.",
+    "hausregeln": [
+      {
+        "titel": "Cheminée",
+        "text": "Das Cheminée ist aus versicherungstechnischen Gründen mit einem elektronischen Schloss gesichert und darf nur benutzt werden, wenn der Vermieter die Nutzung freigegeben hat. Wünscht der Mieter die Nutzung, erhält er vom Vermieter die Anleitung zum Lesen, und der Code wird im Abschnitt «Zutrittscodes» aufgeführt. Mit der Unterzeichnung bestätigt der Mieter, die Anleitung gelesen und verstanden zu haben und diese einzuhalten. Entfernen, Umgehen oder Aufbrechen des Schlosses ist untersagt."
+      },
+      {
+        "titel": "Rauchen, Haustiere, Waschküche",
+        "text": "Das Rauchen ist im ganzen Haus untersagt. Haustiere sind nicht erlaubt. Die Waschküche steht dir jeweils am Dienstag und Freitag ganztägig bis 24:00 Uhr zur Verfügung. An diesen Tagen haben die Eigentümer der Wohnungen bei Bedarf Vorrang. An allen übrigen Tagen ist die Waschküche ausschliesslich den Wohnungseigentümern vorbehalten, auch wenn sie diese nicht aktiv nutzen."
+      },
+      {
+        "titel": "Benutzung des Geländes auf eigene Gefahr",
+        "text": "Die Benutzung des Grundstücks, der Zugangswege, der Treppen und des Chalets erfolgt auf eigene Gefahr und eigene Verantwortung des Mieters und seiner Mitreisenden. Der Mieter nimmt zur Kenntnis, dass Wege und Treppen, insbesondere bei Schnee und Eis, rutschig sein können und die Treppe beim Hauseingang keinen Handlauf hat. Der Vermieter übernimmt keinerlei Haftung für Unfälle, Verletzungen und Sachschäden, die aus der Benutzung entstehen."
+      },
+      {
+        "titel": "Haftung des Mieters",
+        "text": "Der Mieter haftet, gegebenenfalls über seine Privathaftpflichtversicherung, für Schäden, die er oder seine Mitreisenden am Mietobjekt, am Inventar oder an den Gemeinschaftsflächen verursachen, sowie für den Verlust des Schlüssels, der Garagentor-Fernbedienung und der Waschküchen-Badges. Schäden und Verluste sind dem Vermieter umgehend zu melden. Der Vermieter ist nicht verpflichtet, dafür seine eigene Versicherung in Anspruch zu nehmen."
+      },
+      {
+        "titel": "Technische Ausfälle",
+        "text": "Treten während des Aufenthalts unerwartete technische Ausfälle auf (z. B. Heizung, Warmwasser/Boiler oder andere wesentliche Einrichtungen), verpflichtet sich der Vermieter, die Störung im Rahmen der örtlichen Möglichkeiten so rasch wie möglich zu beheben. Ein Anspruch auf sofortige Reparatur oder eine Hotelunterbringung auf Kosten des Vermieters besteht nicht. Bei einer erheblichen, länger dauernden Beeinträchtigung wird der Mietzins angemessen reduziert."
+      },
+      {
+        "titel": "Rücktritt des Vermieters",
+        "text": "Tritt der Vermieter vor Reisebeginn vom Vertrag zurück (infolge höherer Gewalt wie Krieg, Streik oder Beschädigung des Mietobjekts durch Unfälle, Feuer- oder Wasserschäden sowie ähnlich zwingende Gründe), werden alle einbezahlten Beträge unverzüglich zurückerstattet; weitergehende Ansprüche sind ausgeschlossen."
+      },
+      {
+        "titel": "Schlussbestimmungen",
+        "text": "Im Übrigen gelten die Bestimmungen des Schweizerischen Obligationenrechts. Gerichtsstand ist der Ort des Mietobjekts (Adelboden). Dieser Vertrag wird in digitaler Form oder im Doppel durch Unterschrift anerkannt."
+      }
+    ]
+  }
+}
