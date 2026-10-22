@@ -19,6 +19,9 @@ Eingabemaske, die aus den Vertragsdaten ein PDF erzeugt (Vorlage Version 1.8). L
 - Kleinkinder bis 3 Jahre: höchstens 2, zusätzlich zu den 6.
 - Die Werte stehen in `einstellungen.json` unter `vorgaben` (`maxPersonen`, `maxKleinkinder`, `minAlterMieter`).
 
+## Mindestaufenthalt
+Mindestens 4 Nächte (`minNaechte` in `einstellungen.json`). Im Kalender sind Check-out-Tage vor dem Mindestaufenthalt gesperrt; das PDF wird bei weniger Nächten nicht erzeugt.
+
 ## Belegung aus Airbnb
 - Der Kalender zeigt belegte Nächte schraffiert. Die Daten kommen aus `belegt.json` im Repository Tschentomat (wird dort alle 3 Stunden per GitHub Action aus dem Airbnb-Kalender erzeugt). Adresse: `einstellungen.json` unter `belegung.url`.
 - Dieses Projekt enthält keinen Airbnb-Link und keine Secrets.

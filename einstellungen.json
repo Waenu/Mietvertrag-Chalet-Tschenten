@@ -12,7 +12,8 @@
     "checkoutZeit": "10:00",
     "maxKleinkinder": 2,
     "maxPersonen": 6,
-    "minAlterMieter": 18
+    "minAlterMieter": 18,
+    "minNaechte": 4
   },
   "texte": {
     "titel": "Mietvertrag für die Ferienwohnung im «Chalet Tschenten» Adelboden",
