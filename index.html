@@ -40,6 +40,19 @@
   .sig{max-height:70px;border:1px solid var(--line);background:#fff;margin-top:6px;display:block}
   .tot{display:flex;justify-content:space-between;gap:12px;padding:3px 0}
   .tot.big{border-top:1px solid #999;margin-top:4px;padding-top:6px;font-weight:700}
+  .cal-nav{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}
+  .cal-nav strong{font-size:16px}
+  .cal-nav button{width:48px;padding:6px 0;font-size:20px;line-height:1}
+  .cal-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px;max-width:520px}
+  .cal-wd{font-size:12px;color:var(--mut);text-align:center;font-weight:700;padding:2px 0}
+  .cal-d{background:#fff;color:var(--ink);border:1px solid var(--line);border-radius:6px;min-height:42px;padding:2px 0;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.1}
+  .cal-d:hover:not(:disabled){background:#fbeee4}
+  .cal-d small{font-size:10px;font-weight:700}
+  .cal-d:disabled{cursor:not-allowed;color:#aaa;background:#f3f0ea;text-decoration:line-through;border-style:dashed}
+  .cal-d.in{background:#fbeee4;border-color:var(--acc)}
+  .cal-d.sel,.cal-d.sel:hover{background:var(--acc);color:#fff;border-color:var(--acc);font-weight:700}
+  .cal-d.today:not(.sel){border:2px solid #777}
+  .cal-sel{margin:8px 0;font-weight:700}
   @media (max-width:560px){.guest{grid-template-columns:1fr 34px}.guest input[type=date]{grid-column:1}}
 </style>
 </head>
@@ -69,13 +82,19 @@
 
   <section>
     <h2>Check-in, Check-out und Nächte</h2>
-    <div class="grid">
-      <div><label for="cin">Check-in am</label><input id="cin" type="date"></div>
-      <div><label for="cout">Check-out am</label><input id="cout" type="date"></div>
+    <input type="hidden" id="cin"><input type="hidden" id="cout">
+    <div class="cal-nav">
+      <button type="button" id="calPrev" class="sec" aria-label="Vorheriger Monat">‹</button>
+      <strong id="calTitle"></strong>
+      <button type="button" id="calNext" class="sec" aria-label="Nächster Monat">›</button>
+    </div>
+    <div class="cal-grid" id="calGrid"></div>
+    <p class="cal-sel" id="calSel" role="status"></p>
+    <button type="button" id="calReset" class="sec">Daten zurücksetzen</button>
+    <div class="grid" style="margin-top:12px">
       <div class="calc"><label>Anzahl Übernachtungen (automatisch)</label><b id="naechte">–</b></div>
       <div class="calc"><label>Zahlbar bis (kommt ins PDF)</label><b id="zahlbar">–</b></div>
     </div>
-    <div id="datumMsg"></div>
   </section>
 
   <section>
@@ -253,6 +272,51 @@ function gaesteListe(){
     .filter(x=>x.n||x.g);
 }
 
+/* ---------- Kalender (Anreise, dann Abreise; Tage vor der Anreise sind gesperrt) ---------- */
+const MONATE=["Januar","Februar","März","April","Mai","Juni","Juli","August","September","Oktober","November","Dezember"];
+const WT_KURZ=["Mo","Di","Mi","Do","Fr","Sa","So"], WT_SO=["So","Mo","Di","Mi","Do","Fr","Sa"];
+let calY=0, calM=0;
+const dkey=(y,m,d)=>`${y}-${pad(m+1)}-${pad(d)}`;
+function heuteKey(){ const h=heute(); return `${h.y}-${pad(h.m)}-${pad(h.d)}`; }
+function fmtTag(k){ const [y,m,d]=k.split("-").map(Number); return `${WT_SO[new Date(Date.UTC(y,m-1,d)).getUTCDay()]}, ${pad(d)}.${pad(m)}.${y}`; }
+function kalenderStartMonat(){ const h=heute(); calY=h.y; calM=h.m-1; }
+function setzeDaten(a,o){ $("cin").value=a; $("cout").value=o; aktualisieren(); }
+function kalenderKlick(k){
+  const a=$("cin").value, o=$("cout").value;
+  if(!a||(a&&o)) setzeDaten(k,"");        // neue Auswahl: Anreise
+  else if(k===a) setzeDaten("","");       // Anreise nochmals anklicken: zurücksetzen
+  else if(k>a) setzeDaten(a,k);           // Abreise
+}
+function renderKalender(){
+  if(!calY) kalenderStartMonat();
+  const a=$("cin").value, o=$("cout").value, heuteK=heuteKey();
+  $("calTitle").textContent=MONATE[calM]+" "+calY;
+  const g=$("calGrid"); g.innerHTML="";
+  WT_KURZ.forEach(w=>{ const h=document.createElement("div"); h.className="cal-wd"; h.textContent=w; g.appendChild(h); });
+  const lead=(new Date(Date.UTC(calY,calM,1)).getUTCDay()+6)%7;
+  const tage=new Date(Date.UTC(calY,calM+1,0)).getUTCDate();
+  for(let i=0;i<lead;i++) g.appendChild(document.createElement("div"));
+  for(let d=1; d<=tage; d++){
+    const k=dkey(calY,calM,d), b=document.createElement("button");
+    b.type="button"; b.className="cal-d";
+    const istA=k===a, istO=k===o;
+    const gesperrt = a && !o && k<a;                  // Abreise nicht vor der Anreise
+    if(a&&o&&k>a&&k<o) b.classList.add("in");
+    if(istA||istO) b.classList.add("sel");
+    if(k===heuteK) b.classList.add("today");
+    b.disabled=!!gesperrt;
+    b.innerHTML="<span>"+d+"</span>"+(istA?"<small>An</small>":istO?"<small>Ab</small>":"");
+    b.setAttribute("aria-label",fmtTag(k)+(istA?", Check-in":istO?", Check-out":gesperrt?", nicht wählbar":""));
+    if(!gesperrt) b.addEventListener("click",()=>kalenderKlick(k));
+    g.appendChild(b);
+  }
+  const n=naechte(a,o);
+  $("calSel").textContent = a&&o ? `${fmtTag(a)} bis ${fmtTag(o)} = ${n} ${n===1?"Nacht":"Nächte"}`
+    : a ? `Check-in: ${fmtTag(a)}. Bitte Check-out wählen (Tage vor dem Check-in sind gesperrt).`
+        : "Bitte Check-in wählen.";
+}
+function kalenderMonat(delta){ calM+=delta; if(calM<0){calM=11;calY--;} if(calM>11){calM=0;calY++;} renderKalender(); }
+
 /* ---------- Belegung: Auswahllisten werden begrenzt ----------
    Betten: Gäste ab 6 Jahren und Kinder von 4 bis 5 Jahren brauchen je ein normales Bett (zusammen höchstens maxPersonen).
    Kleinkinder bis 3 Jahre: höchstens maxKleinkinder. */
@@ -296,8 +360,7 @@ function mieterAlterFehler(){
 /* ---------- Anzeige / Prüfung ---------- */
 function aktualisieren(){
   belegungBegrenzen();
-  // Check-out: frühestens der Tag nach dem Check-in wählbar (Kalender springt auf diesen Monat)
-  $("cout").min = $("cin").value ? addTage($("cin").value,1) : "";
+  renderKalender();
   const n=naechte($("cin").value,$("cout").value);
   $("naechte").textContent = Number.isNaN(n) ? "–" : (n>0? n : "Check-out liegt nicht nach Check-in");
   const zb=zahlbarBis($("cin").value);
@@ -589,7 +652,7 @@ function leeren(){
   ["vorname","nachname","strasse","plz","ort","mail","mobile","gebMieter","cin","cout","codeWohnung","codeChem"].forEach(i=>$(i).value="");
   $("nErw").value="1"; $("nJug").value="0"; $("nKind").value="0"; $("nKlein").value="0"; $("gebMieter").value=""; $("preis").value="0.00";
   $("rabatt").value=CFG.vorgaben.rabattProzent; $("reinigung").value=fmtRp(CFG.vorgaben.reinigungChf*100);
-  $("chem").value="nein"; $("gaeste").innerHTML=""; meldung("pdfMsg",""); aktualisieren();
+  $("chem").value="nein"; $("gaeste").innerHTML=""; meldung("pdfMsg",""); kalenderStartMonat(); aktualisieren();
 }
 
 async function start(){
@@ -606,12 +669,9 @@ async function start(){
   const h=heute(); $("visDatum").value=`${pad(h.d)}.${pad(h.m)}.${h.y}`; $("visOrt").value=CFG.vorgaben.ort;
   $("rabatt").value=CFG.vorgaben.rabattProzent; $("reinigung").value=fmtRp(CFG.vorgaben.reinigungChf*100);
   document.querySelectorAll("main input,main select").forEach(el=>el.addEventListener("input",aktualisieren));
-  $("cin").addEventListener("input",()=>{
-    const c=$("cin").value, o=$("cout").value;
-    if(c && o && o<=c){ $("cout").value=""; meldung("datumMsg","Check-out lag nicht nach dem neuen Check-in und wurde geleert. Bitte neu wählen.","warn"); }
-    else meldung("datumMsg","");
-    aktualisieren();
-  });
+  $("calPrev").onclick=()=>kalenderMonat(-1);
+  $("calNext").onclick=()=>kalenderMonat(1);
+  $("calReset").onclick=()=>setzeDaten("","");
   $("addGast").onclick=()=>gastZeile();
   $("btnPdf").onclick=pdfErstellen;
   $("btnLeer").onclick=()=>{ if(confirm("Alle Eingaben der Maske löschen? (Einstellungen bleiben erhalten)")) leeren(); };
