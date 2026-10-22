@@ -55,5 +55,9 @@
         "text": "Im Übrigen gelten die Bestimmungen des Schweizerischen Obligationenrechts. Gerichtsstand ist der Ort des Mietobjekts (Adelboden). Dieser Vertrag wird in digitaler Form oder im Doppel durch Unterschrift anerkannt."
       }
     ]
+  },
+  "belegung": {
+    "url": "https://raw.githubusercontent.com/Waenu/Tschentomat/main/belegt.json",
+    "_hinweis": "Belegte Nächte aus dem Airbnb-Kalender, wird vom Repository Tschentomat alle 3 Stunden aktualisiert. Nur Datumsangaben, keine geheimen Links."
   }
 }

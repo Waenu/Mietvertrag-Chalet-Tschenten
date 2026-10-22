@@ -49,6 +49,7 @@
   .cal-d:hover:not(:disabled){background:#fbeee4}
   .cal-d small{font-size:10px;font-weight:700}
   .cal-d:disabled{cursor:not-allowed;color:#aaa;background:#f3f0ea;text-decoration:line-through;border-style:dashed}
+  .cal-d.occ:not(.sel){background:repeating-linear-gradient(45deg,#fff 0 4px,#e0d9cc 4px 6px);color:#6b6b6b}
   .cal-d.in{background:#fbeee4;border-color:var(--acc)}
   .cal-d.sel,.cal-d.sel:hover{background:var(--acc);color:#fff;border-color:var(--acc);font-weight:700}
   .cal-d.today:not(.sel){border:2px solid #777}
@@ -90,6 +91,8 @@
     </div>
     <div class="cal-grid" id="calGrid"></div>
     <p class="cal-sel" id="calSel" role="status"></p>
+    <div id="calWarn"></div>
+    <p id="calBelegt" style="margin:6px 0 10px;font-size:13px;color:var(--mut)"></p>
     <button type="button" id="calReset" class="sec">Daten zurücksetzen</button>
     <div class="grid" style="margin-top:12px">
       <div class="calc"><label>Anzahl Übernachtungen (automatisch)</label><b id="naechte">–</b></div>
@@ -276,6 +279,18 @@ function gaesteListe(){
 const MONATE=["Januar","Februar","März","April","Mai","Juni","Juli","August","September","Oktober","November","Dezember"];
 const WT_KURZ=["Mo","Di","Mi","Do","Fr","Sa","So"], WT_SO=["So","Mo","Di","Mi","Do","Fr","Sa"];
 let calY=0, calM=0;
+let BELEGT=new Set(), BELEGT_STATUS="laden";   // "laden" | "ok" | "fehler"
+async function belegungLaden(){
+  try{
+    const ctl=new AbortController(); const t=setTimeout(()=>ctl.abort(),8000);
+    const r=await fetch(CFG.belegung.url,{cache:"no-store",signal:ctl.signal}); clearTimeout(t);
+    if(!r.ok) throw new Error("HTTP "+r.status);
+    const j=await r.json(); if(!Array.isArray(j.belegt)) throw new Error("Format");
+    BELEGT=new Set(j.belegt); BELEGT_STATUS="ok";
+  }catch(e){ BELEGT=new Set(); BELEGT_STATUS="fehler"; }
+  renderKalender();
+}
+function belegteNaechte(a,o){ const r=[]; if(BELEGT_STATUS!=="ok"||!a||!o) return r; for(let k=a;k<o;k=addTage(k,1)) if(BELEGT.has(k)) r.push(k); return r; }
 const dkey=(y,m,d)=>`${y}-${pad(m+1)}-${pad(d)}`;
 function heuteKey(){ const h=heute(); return `${h.y}-${pad(h.m)}-${pad(h.d)}`; }
 function fmtTag(k){ const [y,m,d]=k.split("-").map(Number); return `${WT_SO[new Date(Date.UTC(y,m-1,d)).getUTCDay()]}, ${pad(d)}.${pad(m)}.${y}`; }
@@ -301,12 +316,13 @@ function renderKalender(){
     b.type="button"; b.className="cal-d";
     const istA=k===a, istO=k===o;
     const gesperrt = a && !o && k<a;                  // Abreise nicht vor der Anreise
+    if(BELEGT_STATUS==="ok" && BELEGT.has(k)) b.classList.add("occ");
     if(a&&o&&k>a&&k<o) b.classList.add("in");
     if(istA||istO) b.classList.add("sel");
     if(k===heuteK) b.classList.add("today");
     b.disabled=!!gesperrt;
     b.innerHTML="<span>"+d+"</span>"+(istA?"<small>An</small>":istO?"<small>Ab</small>":"");
-    b.setAttribute("aria-label",fmtTag(k)+(istA?", Check-in":istO?", Check-out":gesperrt?", nicht wählbar":""));
+    b.setAttribute("aria-label",fmtTag(k)+(istA?", Check-in":istO?", Check-out":gesperrt?", nicht wählbar":"")+(b.classList.contains("occ")?", belegt":""));
     if(!gesperrt) b.addEventListener("click",()=>kalenderKlick(k));
     g.appendChild(b);
   }
@@ -314,6 +330,11 @@ function renderKalender(){
   $("calSel").textContent = a&&o ? `${fmtTag(a)} bis ${fmtTag(o)} = ${n} ${n===1?"Nacht":"Nächte"}`
     : a ? `Check-in: ${fmtTag(a)}. Bitte Check-out wählen (Tage vor dem Check-in sind gesperrt).`
         : "Bitte Check-in wählen.";
+  const bel=belegteNaechte(a,o);
+  $("calWarn").innerHTML = bel.length ? `<div class="msg warn">Achtung: ${bel.length===1?"1 Nacht ist":bel.length+" Nächte sind"} laut Airbnb-Kalender schon belegt (${bel.length>3?fmtDatumIso(bel[0])+" bis "+fmtDatumIso(bel[bel.length-1]):bel.map(fmtDatumIso).join(", ")}). Ist das deine eigene Buchung, ist alles in Ordnung, sonst droht eine Doppelbuchung.</div>` : "";
+  $("calBelegt").textContent = BELEGT_STATUS==="ok" ? "Schraffierte Tage: laut Airbnb-Kalender belegte Nächte (Abgleich alle 3 Stunden). Der Abreisetag zählt nicht als belegt."
+    : BELEGT_STATUS==="laden" ? "Belegung wird geladen …"
+    : "Die Belegung konnte nicht geladen werden. Bitte im Airbnb-Kalender selbst prüfen.";
 }
 function kalenderMonat(delta){ calM+=delta; if(calM<0){calM=11;calY--;} if(calM>11){calM=0;calY++;} renderKalender(); }
 
@@ -683,6 +704,7 @@ async function start(){
     meldung("sMsg","Datei «Mietvertrag Einstellungen PRIVAT.json» erstellt. Enthält IBAN und Unterschrift: nicht ins Repo legen, nicht weitergeben.","warn"); };
   $("sImport").onchange=async e=>{ const f=e.target.files[0]; if(!f) return; try{ PRIV=JSON.parse(await f.text()); privInFelder(); privSpeichern(); meldung("sMsg","Einstellungen geladen.","ok"); aktualisieren(); }catch(x){ meldung("sMsg","Datei konnte nicht gelesen werden.","err"); } };
   aktualisieren();
+  belegungLaden();
 }
 start();
 </script>

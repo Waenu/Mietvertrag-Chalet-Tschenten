@@ -19,6 +19,12 @@ Eingabemaske, die aus den Vertragsdaten ein PDF erzeugt (Vorlage Version 1.8). L
 - Kleinkinder bis 3 Jahre: höchstens 2, zusätzlich zu den 6.
 - Die Werte stehen in `einstellungen.json` unter `vorgaben` (`maxPersonen`, `maxKleinkinder`, `minAlterMieter`).
 
+## Belegung aus Airbnb
+- Der Kalender zeigt belegte Nächte schraffiert. Die Daten kommen aus `belegt.json` im Repository Tschentomat (wird dort alle 3 Stunden per GitHub Action aus dem Airbnb-Kalender erzeugt). Adresse: `einstellungen.json` unter `belegung.url`.
+- Dieses Projekt enthält keinen Airbnb-Link und keine Secrets.
+- Überschneidet sich der gewählte Zeitraum mit belegten Nächten, erscheint eine Warnung. Sie sperrt nichts, weil der Vertrag auch zu einer bereits eingetragenen eigenen Buchung gehören kann.
+- Lässt sich die Belegung nicht laden, erscheint ein Hinweis, und die Maske funktioniert trotzdem.
+
 ## Dateiname
 `JJJJ-MM-TT - JJJJ-MM-TT Mietvertrag Vorname Nachname.pdf`, z. B. `2027-02-18 - 2027-02-25 Mietvertrag Liselotte Freiburghaus.pdf`. Das Jahr steht immer bei beiden Daten.
 
