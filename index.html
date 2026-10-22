@@ -229,13 +229,13 @@ function rechne(){
   return {preis,rab,rein,nach,total:nach+rein};
 }
 
-/* Dateiname: JJJJMMTT - JJJJMMTT Mietvertrag Vorname Nachname.pdf (Jahr immer zweimal, ohne Unterstriche) */
+/* Dateiname: JJJJ-MM-TT - JJJJ-MM-TT Mietvertrag Vorname Nachname.pdf (Jahr immer zweimal) */
 function dateiname(){
   const cin=$("cin").value, cout=$("cout").value;
   const vn=$("vorname").value.trim(), nn=$("nachname").value.trim();
   if(!cin||!cout||!(vn||nn)) return "";
   const name=(vn+" "+nn).trim().replace(/[\\/:*?"<>|]/g,"").replace(/\s+/g," ");
-  return `${cin.replace(/-/g,"")} - ${cout.replace(/-/g,"")} Mietvertrag ${name}.pdf`;
+  return `${cin} - ${cout} Mietvertrag ${name}.pdf`;
 }
 
 /* ---------- Gäste ---------- */
