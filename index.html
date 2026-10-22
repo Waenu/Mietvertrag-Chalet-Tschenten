@@ -62,7 +62,9 @@
       <div><label for="ort">Ort</label><input id="ort" autocomplete="off"></div>
       <div><label for="mail">Mail</label><input id="mail" type="email" autocomplete="off"></div>
       <div><label for="mobile">Mobile</label><input id="mobile" autocomplete="off" inputmode="tel"></div>
+      <div><label for="gebMieter">Geburtsdatum Mieter</label><input id="gebMieter" type="date"></div>
     </div>
+    <div id="mieterMsg"></div>
   </section>
 
   <section>
@@ -78,12 +80,13 @@
   <section>
     <h2>Gäste</h2>
     <div class="grid">
-      <div><label for="nErw">Anzahl Gäste ab 6 Jahren</label><select id="nErw"></select></div>
+      <div><label for="nErw">Anzahl Erwachsene (ab 18 Jahren)</label><select id="nErw"></select></div>
+      <div><label for="nJug">Anzahl Kinder und Jugendliche von 6 bis 17 Jahren</label><select id="nJug"></select></div>
       <div><label for="nKind">Anzahl Kinder von 4 bis 5 Jahren</label><select id="nKind"></select></div>
       <div><label for="nKlein">Anzahl Kleinkinder bis 3 Jahre</label><select id="nKlein"></select></div>
     </div>
     <div id="platz" class="msg ok" style="margin-top:10px"></div>
-    <p style="margin:12px 0 4px;font-size:13px;color:var(--mut)">Vorname Nachname, Geburtsdatum</p>
+    <p style="margin:12px 0 4px;font-size:13px;color:var(--mut)">Weitere Gäste: Vorname Nachname, Geburtsdatum (der Mieter steht im Vertrag automatisch an erster Stelle)</p>
     <div id="gaeste"></div>
     <button class="sec" type="button" id="addGast">+ Gast</button>
     <div id="gaesteMsg"></div>
@@ -265,17 +268,30 @@ function fuelleListe(id,von,bis,wert){
 }
 function belegungBegrenzen(){
   if(!CFG) return;
-  const P=CFG.vorgaben;
-  const nE=Math.min(Math.max(parseInt($("nErw").value,10)||1,1),P.maxPersonen);
-  const kindAlt=parseInt($("nKind").value,10)||0, kindMax=P.maxPersonen-nE;
-  fuelleListe("nErw",1,P.maxPersonen,nE);
-  fuelleListe("nKind",0,kindMax,kindAlt);
-  fuelleListe("nKlein",0,P.maxKleinkinder,parseInt($("nKlein").value,10)||0);
-  const nK=+$("nKind").value;
-  kuerzHinweis = kindAlt>kindMax ? `Kinder von 4 bis 5 Jahren auf ${kindMax} gekürzt: mit ${nE} Gästen ab 6 Jahren sind höchstens ${kindMax} möglich.` : "";
-  const frei=P.maxPersonen-nE-nK;
+  const P=CFG.vorgaben, M=P.maxPersonen, num=id=>parseInt($(id).value,10)||0;
+  const eAlt=num("nErw"), jAlt=num("nJug"), kAlt=num("nKind");
+  fuelleListe("nErw",1,M,Math.max(eAlt,1)); const e=+$("nErw").value;
+  fuelleListe("nJug",0,M-e,jAlt);           const j=+$("nJug").value;
+  fuelleListe("nKind",0,M-e-j,kAlt);        const k=+$("nKind").value;
+  fuelleListe("nKlein",0,P.maxKleinkinder,num("nKlein"));
+  const h=[];
+  if(jAlt>M-e) h.push(`Kinder und Jugendliche von 6 bis 17 Jahren auf ${j} gekürzt`);
+  if(kAlt>M-e-j) h.push(`Kinder von 4 bis 5 Jahren auf ${k} gekürzt`);
+  kuerzHinweis = h.length ? h.join("; ")+`: Erwachsene, Jugendliche und Kinder ab 4 Jahren brauchen zusammen höchstens ${M} Betten.` : "";
+  const frei=M-e-j-k;
   $("platz").className="msg "+(frei===0?"warn":"ok");
-  $("platz").textContent=(frei===0?"Alle ":"Noch "+frei+" von ")+P.maxPersonen+" Betten "+(frei===0?"belegt":"frei")+". Kinder von 4 bis 5 Jahren brauchen ein Erwachsenenbett. Kleinkinder bis 3 Jahre: höchstens "+P.maxKleinkinder+".";
+  $("platz").textContent=(frei===0?"Alle "+M+" Betten belegt.":"Noch "+frei+" von "+M+" Betten frei.")+" Kinder ab 4 Jahren brauchen ein Erwachsenenbett. Kleinkinder bis 3 Jahre: höchstens "+P.maxKleinkinder+" (kein Bett nötig).";
+}
+
+function alterAm(geb,stichtag){
+  const [gy,gm,gd]=geb.split("-").map(Number), [sy,sm,sd]=stichtag.split("-").map(Number);
+  let a=sy-gy; if(sm<gm||(sm===gm&&sd<gd)) a--; return a;
+}
+function mieterAlterFehler(){
+  const geb=$("gebMieter").value, cin=$("cin").value;
+  if(!geb||!cin) return "";
+  const min=(CFG&&CFG.vorgaben.minAlterMieter)||18, a=alterAm(geb,cin);
+  return a<min ? `Der Mieter ist am Check-in erst ${a} Jahre alt, nötig sind mindestens ${min}.` : "";
 }
 
 /* ---------- Anzeige / Prüfung ---------- */
@@ -297,9 +313,10 @@ function aktualisieren(){
   $("chemCodeBox").hidden = $("chem").value!=="ja";
 
   const w=[]; const g=gaesteListe();
-  const nE=+$("nErw").value||0,nK=+$("nKind").value||0,nKl=+$("nKlein").value||0;
-  if(g.length && g.length!==nE+nK+nKl) w.push(`Es sind ${g.length} Gäste namentlich aufgeführt, die Anzahlen oben ergeben ${nE+nK+nKl}.`);
+  const total=(+$("nErw").value||0)+(+$("nJug").value||0)+(+$("nKind").value||0)+(+$("nKlein").value||0), genannt=1+g.length;
+  if(genannt!==total) w.push(`Namentlich aufgeführt: ${genannt} von ${total} Personen (Mieter plus weitere Gäste).`);
   if(kuerzHinweis) w.push(kuerzHinweis);
+  { const m=mieterAlterFehler(); $("mieterMsg").innerHTML = m?`<div class="msg err">${m}</div>`:""; }
   $("gaesteMsg").innerHTML = w.map(t=>`<div class="msg warn">${t}</div>`).join("");
 
   const s=PRIV.sigData ? "Unterschrift: geladen." : "Unterschrift: noch nicht geladen (Einstellungen).";
@@ -429,10 +446,10 @@ function erstellePdf(daten){
   const gl=daten.gaeste;
   ensure(30+gl.length*4.6);
   bar([{t:"Gäste: Anzahl, Namen und Geburtsdaten"}]);
-  [["Anzahl Gäste ab 6 Jahren",daten.nErw],["Anzahl Kinder von 4 bis 5 Jahren",daten.nKind],["Anzahl Kleinkinder bis 3 Jahre",daten.nKlein]]
-    .forEach(([l,v])=>{ setF(false,9); doc.text(l,cx,y+lh9*0.74); doc.text(String(v),cx+60,y+lh9*0.74); y+=lh9; });
+  [["Anzahl Erwachsene (ab 18 Jahren)",daten.nErw],["Anzahl Kinder und Jugendliche von 6 bis 17 Jahren",daten.nJug],["Anzahl Kinder von 4 bis 5 Jahren",daten.nKind],["Anzahl Kleinkinder bis 3 Jahre",daten.nKlein]]
+    .forEach(([l,v])=>{ setF(false,9); doc.text(l,cx,y+lh9*0.74); doc.text(String(v),cx+85,y+lh9*0.74); y+=lh9; });
   y+=1.5;
-  gl.forEach(g=>{ ensure(lh9); setF(false,9); doc.text(`${g.n}${g.g?", "+fmtDatumIso(g.g):""}`,cx,y+lh9*0.74); y+=lh9; });
+  gl.forEach(g=>{ ensure(lh9); setF(false,9); doc.text(`${g.n}${g.g?", "+fmtDatumIso(g.g):""}${g.m?" (Mieter)":""}`,cx,y+lh9*0.74); y+=lh9; });
   y+=1.5;
   para([{t:T.gaesteHinweis}],{after:3});
 
@@ -538,10 +555,12 @@ async function pdfErstellen(){
   const cin=$("cin").value, cout=$("cout").value, n=naechte(cin,cout);
   if(!$("vorname").value.trim()&&!$("nachname").value.trim()) fehler.push("Name des Mieters fehlt.");
   if(!cin||!cout) fehler.push("Check-in und Check-out fehlen."); else if(!(n>0)) fehler.push("Check-out muss nach dem Check-in liegen.");
-  if(CFG){ const e=+$("nErw").value,k=+$("nKind").value,kl=+$("nKlein").value;
-    if(e<1) fehler.push("Mindestens 1 Gast ab 6 Jahren.");
-    if(e+k>CFG.vorgaben.maxPersonen) fehler.push("Höchstens "+CFG.vorgaben.maxPersonen+" Personen mit Bett (Gäste ab 6 Jahren plus Kinder von 4 bis 5 Jahren).");
-    if(kl>CFG.vorgaben.maxKleinkinder) fehler.push("Höchstens "+CFG.vorgaben.maxKleinkinder+" Kleinkinder."); }
+  if(CFG){ const e=+$("nErw").value,j=+$("nJug").value,k=+$("nKind").value,kl=+$("nKlein").value;
+    if(e<1) fehler.push("Mindestens 1 Erwachsener (ab 18 Jahren) ist nötig.");
+    if(e+j+k>CFG.vorgaben.maxPersonen) fehler.push("Höchstens "+CFG.vorgaben.maxPersonen+" Personen mit Bett (Erwachsene, Jugendliche und Kinder ab 4 Jahren).");
+    if(kl>CFG.vorgaben.maxKleinkinder) fehler.push("Höchstens "+CFG.vorgaben.maxKleinkinder+" Kleinkinder.");
+    if(!$("gebMieter").value) fehler.push("Geburtsdatum des Mieters fehlt.");
+    const ma=mieterAlterFehler(); if(ma) fehler.push(ma); }
   const r=rechne(); if(!r) fehler.push("Preis, Rabatt (0 bis 100) oder Reinigung sind keine gültigen Zahlen.");
   if(!PRIV.name||!PRIV.iban) fehler.push("Vermieter-Angaben und IBAN fehlen: bitte unter «Einstellungen» einmalig eintragen.");
   if(!PRIV.sigData) fehler.push("Unterschrift fehlt: bitte unter «Einstellungen» laden.");
@@ -550,8 +569,8 @@ async function pdfErstellen(){
   const daten={
     vorname:$("vorname").value.trim(),nachname:$("nachname").value.trim(),strasse:$("strasse").value.trim(),
     plz:$("plz").value.trim(),ort:$("ort").value.trim(),mail:$("mail").value.trim(),mobile:$("mobile").value.trim(),
-    cin,cout,naechte:n,zahlbar:zahlbarBis(cin),nErw:+$("nErw").value||0,nKind:+$("nKind").value||0,nKlein:+$("nKlein").value||0,
-    gaeste:gaesteListe(),r,rabTxt:String(parseZahl($("rabatt").value)).replace(".",","),
+    cin,cout,naechte:n,zahlbar:zahlbarBis(cin),nErw:+$("nErw").value||0,nJug:+$("nJug").value||0,nKind:+$("nKind").value||0,nKlein:+$("nKlein").value||0,
+    gaeste:[{n:($("vorname").value.trim()+" "+$("nachname").value.trim()).trim(),g:$("gebMieter").value,m:true},...gaesteListe()],r,rabTxt:String(parseZahl($("rabatt").value)).replace(".",","),
     codeWohnung:$("codeWohnung").value.trim(),chem:$("chem").value,codeChem:$("codeChem").value.trim(),
     visOrt:CFG.vorgaben.ort,visDatum:$("visDatum").value,dateiname:dateiname()
   };
@@ -564,10 +583,10 @@ async function pdfErstellen(){
 
 /* ---------- Start ---------- */
 function leeren(){
-  ["vorname","nachname","strasse","plz","ort","mail","mobile","cin","cout","codeWohnung","codeChem"].forEach(i=>$(i).value="");
-  $("nErw").value="1"; $("nKind").value="0"; $("nKlein").value="0"; $("preis").value="0.00";
+  ["vorname","nachname","strasse","plz","ort","mail","mobile","gebMieter","cin","cout","codeWohnung","codeChem"].forEach(i=>$(i).value="");
+  $("nErw").value="1"; $("nJug").value="0"; $("nKind").value="0"; $("nKlein").value="0"; $("gebMieter").value=""; $("preis").value="0.00";
   $("rabatt").value=CFG.vorgaben.rabattProzent; $("reinigung").value=fmtRp(CFG.vorgaben.reinigungChf*100);
-  $("chem").value="nein"; $("gaeste").innerHTML=""; gastZeile(); meldung("pdfMsg",""); aktualisieren();
+  $("chem").value="nein"; $("gaeste").innerHTML=""; meldung("pdfMsg",""); aktualisieren();
 }
 
 async function start(){
@@ -583,7 +602,6 @@ async function start(){
   $("vers").textContent=`Vorlage Version ${CFG.vorlage.version} / ${CFG.vorlage.datum}`;
   const h=heute(); $("visDatum").value=`${pad(h.d)}.${pad(h.m)}.${h.y}`; $("visOrt").value=CFG.vorgaben.ort;
   $("rabatt").value=CFG.vorgaben.rabattProzent; $("reinigung").value=fmtRp(CFG.vorgaben.reinigungChf*100);
-  gastZeile();
   document.querySelectorAll("main input,main select").forEach(el=>el.addEventListener("input",aktualisieren));
   $("addGast").onclick=()=>gastZeile();
   $("btnPdf").onclick=pdfErstellen;

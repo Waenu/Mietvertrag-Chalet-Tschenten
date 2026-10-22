@@ -13,6 +13,12 @@ Eingabemaske, die aus den Vertragsdaten ein PDF erzeugt (Vorlage Version 1.8). L
 - Total = Preis nach Rabatt + Reinigungsgebühr
 - Zahlbar bis = Check-in minus 30 Tage (steht im PDF unter dem Zahlungshinweis). Liegt dieses Datum vor dem Ausfülltag (kurzfristige Buchung), erscheint kein Datum; es gilt dann der Vertragssatz «3 Tage nach Vertragsabschluss».
 
+## Belegungsregeln (Vorlage 1.9)
+- Mindestens 1 Erwachsener (ab 18 Jahren). Der Mieter steht als erster Eintrag in der Gästeliste, sein Geburtsdatum ist Pflicht und wird am Check-in auf mindestens 18 Jahre geprüft.
+- Erwachsene + Kinder und Jugendliche von 6 bis 17 Jahren + Kinder von 4 bis 5 Jahren: zusammen höchstens 6 (Erwachsenenbetten). Die Auswahllisten werden entsprechend begrenzt.
+- Kleinkinder bis 3 Jahre: höchstens 2, zusätzlich zu den 6.
+- Die Werte stehen in `einstellungen.json` unter `vorgaben` (`maxPersonen`, `maxKleinkinder`, `minAlterMieter`).
+
 ## Dateiname
 `JJJJ_MM_TT-MM_TT Mietvertrag Vorname Nachname.pdf`, z. B. `2027_02_18-02_25 Mietvertrag Liselotte Freiburghaus.pdf`.
 Bei Jahreswechsel mit Jahr beim Austritt: `2027_12_28-2028_01_03 …`.

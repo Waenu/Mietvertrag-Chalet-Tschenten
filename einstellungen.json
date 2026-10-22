@@ -1,8 +1,8 @@
 {
   "_hinweis": "Hier stehen nur Vorgaben und Vertragstexte. Persönliche Daten (Adresse, IBAN, Telefonnummern, QR-Bild, Unterschrift) werden NICHT hier gespeichert, sondern in der App unter «Einstellungen» lokal im Browser.",
   "vorlage": {
-    "version": "1.8",
-    "datum": "07.09.2026"
+    "version": "1.9",
+    "datum": "22.10.2026"
   },
   "vorgaben": {
     "ort": "Densbüren",
@@ -11,14 +11,15 @@
     "checkinZeit": "16:00",
     "checkoutZeit": "10:00",
     "maxKleinkinder": 2,
-    "maxPersonen": 6
+    "maxPersonen": 6,
+    "minAlterMieter": 18
   },
   "texte": {
     "titel": "Mietvertrag für die Ferienwohnung im «Chalet Tschenten» Adelboden",
     "adresse": "Chalet Tschenten, Mattenweg 2, 3715 Adelboden, Hauseingang im Erdgeschoss Familie Werder",
     "beschreibung": "Vollständig ausgestattete 4,5 Zimmer-Parterrewohnung mit drei Schlafzimmern und zwei Badezimmern. Die Ferienwohnung ist für sechs erwachsene Personen und zwei Kleinkinder bis max. 3 Jahren ausgelegt.",
     "checkoutHinweis": "Bitte halte beim Check-out unbedingt die {checkout} Uhr-Regel ein. Für die Reinigung benötigen wir die verbleibenden Stunden bis {checkin} Uhr, damit die Wohnung stets tadellos sauber übergeben werden kann.",
-    "gaesteHinweis": "Im Chalet dürfen nur die in der Buchung aufgeführten Personen übernachten.",
+    "gaesteHinweis": "Der Mieter ist mindestens 18 Jahre alt und schliesst diesen Vertrag auch für alle aufgeführten Mitreisenden ab. Im Chalet dürfen nur die in der Buchung aufgeführten Personen übernachten.",
     "zahlungHinweis": "Bitte überweise den Totalbetrag bis 30 Tage vor dem Check-in. Bei Buchungen, die weniger als 30 Tage vor dem Check-in erfolgen, ist der Totalbetrag innerhalb von 3 Tagen nach Vertragsabschluss fällig.",
     "leistungen": "Bett-, Frottee- und Küchenwäsche, Strom, Heizung, Wasser, WLAN, Garage und Aussenparkplatz sowie Kurtaxen und Gästekarten.",
     "leistungenLink": "https://adelboden-lenk-kandersteg.ch/buchen/angebote/gaestekarte",
