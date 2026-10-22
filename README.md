@@ -20,8 +20,7 @@ Eingabemaske, die aus den Vertragsdaten ein PDF erzeugt (Vorlage Version 1.8). L
 - Die Werte stehen in `einstellungen.json` unter `vorgaben` (`maxPersonen`, `maxKleinkinder`, `minAlterMieter`).
 
 ## Dateiname
-`JJJJ_MM_TT-MM_TT Mietvertrag Vorname Nachname.pdf`, z. B. `2027_02_18-02_25 Mietvertrag Liselotte Freiburghaus.pdf`.
-Bei Jahreswechsel mit Jahr beim Austritt: `2027_12_28-2028_01_03 …`.
+`JJJJMMTT - JJJJMMTT Mietvertrag Vorname Nachname.pdf`, z. B. `20270218 - 20270225 Mietvertrag Liselotte Freiburghaus.pdf`. Das Jahr steht immer bei beiden Daten.
 
 ## Persönliche Daten (nicht im Repo)
 Vermieter-Adresse, Mail, Telefonnummern, IBAN, QR-Bild und Unterschrift werden unter «Einstellungen» einmalig eingegeben und nur im Browser des Rechners gespeichert. Mit «Einstellungen sichern» entsteht eine Datei `Mietvertrag Einstellungen PRIVAT.json` als Kopie auf dem PC (nicht ins Repo legen; `.gitignore` schliesst sie aus).

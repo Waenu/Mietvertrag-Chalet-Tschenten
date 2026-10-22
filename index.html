@@ -229,15 +229,13 @@ function rechne(){
   return {preis,rab,rein,nach,total:nach+rein};
 }
 
-/* Dateiname: 2027_02_18-02_25 Mietvertrag Vorname Nachname.pdf (über den Jahreswechsel mit Jahr beim Austritt) */
+/* Dateiname: JJJJMMTT - JJJJMMTT Mietvertrag Vorname Nachname.pdf (Jahr immer zweimal, ohne Unterstriche) */
 function dateiname(){
   const cin=$("cin").value, cout=$("cout").value;
   const vn=$("vorname").value.trim(), nn=$("nachname").value.trim();
   if(!cin||!cout||!(vn||nn)) return "";
-  const [y1,m1,d1]=cin.split("-"), [y2,m2,d2]=cout.split("-");
-  const bis = y1===y2 ? `${m2}_${d2}` : `${y2}_${m2}_${d2}`;
   const name=(vn+" "+nn).trim().replace(/[\\/:*?"<>|]/g,"").replace(/\s+/g," ");
-  return `${y1}_${m1}_${d1}-${bis} Mietvertrag ${name}.pdf`;
+  return `${cin.replace(/-/g,"")} - ${cout.replace(/-/g,"")} Mietvertrag ${name}.pdf`;
 }
 
 /* ---------- Gäste ---------- */
